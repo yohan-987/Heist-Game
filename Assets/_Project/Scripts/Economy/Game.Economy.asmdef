@@ -1,0 +1,14 @@
+{
+    "name": "Game.Economy",
+    "rootNamespace": "Game.Economy",
+    "references": ["Game.Core","Game.Items"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

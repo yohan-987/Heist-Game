@@ -1,0 +1,14 @@
+{
+    "name": "Game.DevTools",
+    "rootNamespace": "Game.DevTools",
+    "references": ["Game.Core","Game.Player","Game.Interaction","Game.Items","Game.Enemies","Game.LevelGen","Game.Economy","Game.UI","Game.Audio","Game.Save"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
