@@ -27,6 +27,8 @@ namespace Game.LevelGen
         [Header("Spawn points (children of this prefab)")]
         [SerializeField] private Transform[] _valuableSpawns;
         [SerializeField] private Transform[] _enemySpawns;
+        [Tooltip("Where ground doctors and spider nests may be placed.")]
+        [SerializeField] private Transform[] _nuisanceSpawns;
         [Tooltip("Only used on start rooms.")]
         [SerializeField] private Transform _playerSpawn;
         [Tooltip("Inactive child holding the ExtractionZone. Enabled only in the extraction room.")]
@@ -38,6 +40,7 @@ namespace Game.LevelGen
         public string Id => _id;
         public Transform[] ValuableSpawns => _valuableSpawns ?? Array.Empty<Transform>();
         public Transform[] EnemySpawns => _enemySpawns ?? Array.Empty<Transform>();
+        public Transform[] NuisanceSpawns => _nuisanceSpawns ?? Array.Empty<Transform>();
         public Transform PlayerSpawn => _playerSpawn;
         public GameObject ExtractionZoneRoot => _extractionZoneRoot;
 

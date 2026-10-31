@@ -20,11 +20,20 @@ namespace Game.LevelGen
         [Header("Valuables")]
         public ValuableDefinition[] ValuablePool;
         [Min(0f)] public float ValueBudget = 6000f;
-        [Tooltip("Quota is this fraction of the value actually spawned, so a level is always winnable.")]
+
+        [Header("Medicine")]
+        [Tooltip("Delivered value needed to produce one dose (before difficulty scaling).")]
+        [Min(1f)] public float ValuePerDose = 500f;
+        [Tooltip("Quota is this fraction of the doses the spawned value could produce, so a level is always winnable.")]
         [Range(0.1f, 1f)] public float QuotaFraction = 0.55f;
 
-        [Header("Enemies")]
+        [Header("Doctors (lethal)")]
         public EnemyDefinition[] EnemyPool;
         [Min(0f)] public float EnemyBudget = 3f;
+
+        [Header("Nuisances (non-lethal)")]
+        [Tooltip("Prefabs such as a ground doctor or a spider nest. One is picked per spawn point.")]
+        public GameObject[] NuisancePrefabs;
+        [Min(0)] public int NuisanceCount = 4;
     }
 }

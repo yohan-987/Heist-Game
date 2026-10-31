@@ -38,6 +38,7 @@ namespace Game.Interaction
         private IPlayerAvatar _avatar;
         private Transform _head;
         private Grabbable _held;
+        private IUsable _heldUsable;
         private float _holdDistance;
         private float _pendingYawDegrees;
 
@@ -89,6 +90,8 @@ namespace Game.Interaction
                 return;
             }
 
+            if (input.UsePressed && _heldUsable != null) _heldUsable.Use(PlayerId);
+
             if (input.RotateHeld)
                 _pendingYawDegrees += input.Scroll * _rotateStepDegrees;
             else
@@ -139,6 +142,7 @@ namespace Game.Interaction
             if (!grabbable.RequestGrab(this)) return false;
 
             _held = grabbable;
+            _heldUsable = grabbable.GetComponent<IUsable>();
             _holdDistance = Mathf.Clamp(
                 Vector3.Distance(_head.position, body.position), _minHoldDistance, _maxHoldDistance);
             _pendingYawDegrees = 0f;
@@ -150,6 +154,7 @@ namespace Game.Interaction
             if (_held == null) return;
             var g = _held;
             _held = null;
+            _heldUsable = null;
             g.Release(this);
         }
 
@@ -162,6 +167,8 @@ namespace Game.Interaction
 
             float speed = GrabMath.ThrowSpeed(body.mass, _throwSpeed, _maxThrowSpeed);
             body.linearVelocity = _head.forward * speed;
+
+            Services.Events.Publish(new ObjectThrown(g.Id, PlayerId));
         }
 
         /// <summary>Called when the held object is disabled/destroyed or the player dies.</summary>
@@ -170,6 +177,7 @@ namespace Game.Interaction
             if (_held == null) return;
             var g = _held;
             _held = null;
+            _heldUsable = null;
             g.Release(this);
         }
 

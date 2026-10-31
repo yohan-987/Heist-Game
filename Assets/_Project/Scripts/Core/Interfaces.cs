@@ -40,6 +40,21 @@ namespace Game.Core
         float SpeedMultiplier { get; }
     }
 
+    /// <summary>An object a holding player can activate (a radio, for example).</summary>
+    public interface IUsable
+    {
+        void Use(int playerId);
+    }
+
+    /// <summary>
+    /// Something that can have its movement slowed from outside (enemies holding a player, sticky
+    /// floors). Implemented by the player motor.
+    /// </summary>
+    public interface ISpeedModifierTarget
+    {
+        SpeedModifiers Modifiers { get; }
+    }
+
     /// <summary>Anything a player can be: local or, later, remote. Lets systems avoid FindObjectOfType.</summary>
     public interface IPlayerAvatar
     {

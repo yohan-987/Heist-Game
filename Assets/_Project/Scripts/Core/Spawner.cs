@@ -15,14 +15,14 @@ namespace Game.Core
         public T Spawn<T>(T prefab, Vector3 position, Quaternion rotation, Transform parent = null) where T : Component
         {
             var instance = Object.Instantiate(prefab, position, rotation, parent);
-            Tag(instance.gameObject);
+            EnsureIdentity(instance.gameObject);
             return instance;
         }
 
         public GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)
         {
             var instance = Object.Instantiate(prefab, position, rotation, parent);
-            Tag(instance);
+            EnsureIdentity(instance);
             return instance;
         }
 
@@ -31,11 +31,16 @@ namespace Game.Core
             if (instance != null) Object.Destroy(instance);
         }
 
-        private void Tag(GameObject go)
+        /// <summary>
+        /// Gives an object an id if it has none. Spawned objects get one automatically; objects placed
+        /// by hand in a scene get one the first time something needs it.
+        /// </summary>
+        public EntityId EnsureIdentity(GameObject go)
         {
             var identity = go.GetComponent<EntityIdentity>();
             if (identity == null) identity = go.AddComponent<EntityIdentity>();
-            identity.Id = _ids.Next();
+            if (!identity.Id.IsValid) identity.Id = _ids.Next();
+            return identity.Id;
         }
     }
 }

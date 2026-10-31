@@ -12,14 +12,17 @@ namespace Game.Core
         public Vector2 Look;          // delta this frame, already scaled for sensitivity by the source
         public bool Sprint;           // held
         public bool Crouch;           // held
-        public bool JumpPressed;      // edge, true for one frame
+        public bool JumpPressed;      // edge, true for one frame (also the struggle button when held by an enemy)
         public bool GrabHeld;         // held
         public bool GrabPressed;      // edge
         public bool ThrowPressed;     // edge
         public bool RotateHeld;       // held: scroll rotates instead of changing distance
+        public bool TakeMedicinePressed; // edge: take one dose
+        public bool UsePressed;       // edge: activate the held object (e.g. toggle a radio)
+        public bool SwatPressed;      // edge: swat spiders off the screen
         public float Scroll;          // wheel delta this frame
 
-        public static PlayerInputState None => default;
+        public static PlayerInputState None => default(PlayerInputState);
     }
 
     public interface IPlayerInputSource

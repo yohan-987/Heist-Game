@@ -19,11 +19,18 @@ namespace Game.LevelGen
         public readonly Transform PlayerSpawn;
         public readonly int ValuableCount;
         public readonly int EnemyCount;
+        public readonly int NuisanceCount;
+        /// <summary>Quota in doses, already scaled for the current difficulty.</summary>
+        public readonly int QuotaDoses;
+        /// <summary>The level's base value per dose. Pass this to <c>RunTracker.Begin</c>, which applies difficulty itself.</summary>
+        public readonly float ValuePerDose;
 
-        public LevelBuildResult(LevelLayout layout, float spawnedValue, Transform playerSpawn, int valuables, int enemies)
+        public LevelBuildResult(LevelLayout layout, float spawnedValue, Transform playerSpawn,
+            int valuables, int enemies, int nuisances, int quotaDoses, float valuePerDose)
         {
             Layout = layout; SpawnedValue = spawnedValue; PlayerSpawn = playerSpawn;
-            ValuableCount = valuables; EnemyCount = enemies;
+            ValuableCount = valuables; EnemyCount = enemies; NuisanceCount = nuisances;
+            QuotaDoses = quotaDoses; ValuePerDose = valuePerDose;
         }
     }
 
@@ -75,15 +82,22 @@ namespace Game.LevelGen
             // Separate generators so adding enemies later never shifts where valuables land.
             var valuableRng = new DeterministicRandom(seed ^ 0x5EED1);
             var enemyRng = new DeterministicRandom(seed ^ 0x5EED2);
+            var nuisanceRng = new DeterministicRandom(seed ^ 0x5EED3);
 
             float spawnedValue = 0f;
             int valuableCount = PopulateValuables(layout, instances, valuableRng, ref spawnedValue);
             int enemyCount = PopulateEnemies(layout, instances, enemyRng);
+            int nuisanceCount = PopulateNuisances(layout, instances, nuisanceRng);
 
             if (_navMeshBaker is INavMeshBaker baker) baker.Bake(_root);
 
+            // Quota is a share of what the level could produce, so it is always winnable.
+            float scaledValuePerDose = _definition.ValuePerDose * Services.Difficulty.ValuePerDoseMultiplier;
+            int quotaDoses = Compounder.QuotaDoses(spawnedValue, _definition.QuotaFraction, scaledValuePerDose);
+
             var spawn = instances[layout.StartRoomIndex].PlayerSpawn;
-            var result = new LevelBuildResult(layout, spawnedValue, spawn, valuableCount, enemyCount);
+            var result = new LevelBuildResult(layout, spawnedValue, spawn, valuableCount, enemyCount,
+                nuisanceCount, quotaDoses, _definition.ValuePerDose);
             Last = result;
             return result;
         }
@@ -177,7 +191,8 @@ namespace Game.LevelGen
                 if (pool[i] != null && pool[i].Prefab != null)
                     options.Add(new SpawnOption(i, pool[i].SpawnCost, pool[i].SpawnWeight));
 
-            var picks = SpawnPlanner.Choose(rng, options, _definition.EnemyBudget, points.Count);
+            float budget = _definition.EnemyBudget * Services.Difficulty.EnemyBudgetMultiplier;
+            var picks = SpawnPlanner.Choose(rng, options, budget, points.Count);
 
             for (int n = 0; n < picks.Count; n++)
             {
@@ -186,6 +201,30 @@ namespace Game.LevelGen
                 Services.Spawner.Spawn(def.Prefab, point.position, point.rotation, _root);
             }
             return picks.Count;
+        }
+
+        /// <summary>Ground doctors, spider nests and similar non-lethal hazards, placed at nuisance spawn points.</summary>
+        private int PopulateNuisances(LevelLayout layout, List<RoomAuthoring> rooms, DeterministicRandom rng)
+        {
+            var prefabs = _definition.NuisancePrefabs;
+            if (prefabs == null || prefabs.Length == 0 || _definition.NuisanceCount <= 0) return 0;
+
+            var points = CollectPoints(layout, rooms, r => r.NuisanceSpawns);
+            if (points.Count == 0) return 0;
+            rng.Shuffle(points);
+
+            int wanted = System.Math.Min(_definition.NuisanceCount, points.Count);
+            int spawned = 0;
+            for (int n = 0; n < wanted; n++)
+            {
+                var prefab = prefabs[rng.Range(0, prefabs.Length)];
+                if (prefab == null) continue;
+
+                var point = points[n];
+                Services.Spawner.Spawn(prefab, point.position, point.rotation, _root);
+                spawned++;
+            }
+            return spawned;
         }
 
         /// <summary>Spawn points from every room except the start room, in a fixed order.</summary>

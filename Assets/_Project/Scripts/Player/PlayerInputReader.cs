@@ -16,6 +16,7 @@ namespace Game.Player
         [SerializeField, Min(0f)] private float _stickSensitivity = 140f;     // degrees per second at full tilt
 
         private InputAction _move, _lookMouse, _lookStick, _sprint, _crouch, _jump, _grab, _throw, _rotate, _scroll;
+        private InputAction _medicine, _use, _swat;
 
         /// <summary>Set false while a menu is open so the character doesn't move behind it.</summary>
         public bool Enabled { get; set; } = true;
@@ -40,6 +41,9 @@ namespace Game.Player
                     GrabPressed = _grab.WasPressedThisFrame(),
                     ThrowPressed = _throw.WasPressedThisFrame(),
                     RotateHeld = _rotate.IsPressed(),
+                    TakeMedicinePressed = _medicine.WasPressedThisFrame(),
+                    UsePressed = _use.WasPressedThisFrame(),
+                    SwatPressed = _swat.WasPressedThisFrame(),
                     Scroll = Mathf.Clamp(_scroll.ReadValue<float>() / 120f, -3f, 3f),
                 };
             }
@@ -77,6 +81,15 @@ namespace Game.Player
             _rotate.AddBinding("<Gamepad>/leftShoulder");
 
             _scroll = new InputAction("Scroll", InputActionType.Value, "<Mouse>/scroll/y");
+
+            _medicine = new InputAction("TakeMedicine", InputActionType.Button, "<Keyboard>/q");
+            _medicine.AddBinding("<Gamepad>/dpad/up");
+
+            _use = new InputAction("Use", InputActionType.Button, "<Keyboard>/e");
+            _use.AddBinding("<Gamepad>/buttonNorth");
+
+            _swat = new InputAction("Swat", InputActionType.Button, "<Keyboard>/f");
+            _swat.AddBinding("<Gamepad>/rightShoulder");
         }
 
         private void OnEnable()
@@ -103,7 +116,8 @@ namespace Game.Player
 
         private InputAction[] AllActions() => new[]
         {
-            _move, _lookMouse, _lookStick, _sprint, _crouch, _jump, _grab, _throw, _rotate, _scroll
+            _move, _lookMouse, _lookStick, _sprint, _crouch, _jump, _grab, _throw, _rotate, _scroll,
+            _medicine, _use, _swat
         };
     }
 }

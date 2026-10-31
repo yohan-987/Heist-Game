@@ -14,6 +14,9 @@ namespace Game.Enemies
         [Min(0.1f)] public float PatrolSpeed = 1.8f;
         [Min(0.1f)] public float InvestigateSpeed = 2.8f;
         [Min(0.1f)] public float ChaseSpeed = 4.6f;
+        [Min(0.1f)] public float FleeSpeed = 4.2f;
+        [Tooltip("How far it tries to run when scared away.")]
+        [Min(1f)] public float FleeDistance = 14f;
 
         [Header("Sight")]
         [Min(0f)] public float SightRange = 14f;
@@ -26,6 +29,8 @@ namespace Game.Enemies
         [Min(0f)] public float HearingSensitivity = 1f;
         [Tooltip("Noise weaker than this perceived fraction (0-1) is ignored.")]
         [Range(0f, 1f)] public float HearingThreshold = 0.1f;
+        [Tooltip("Per noise type multiplier. Doctors ignore music so that playing it is a real choice.")]
+        public SourceHearing Hearing = new SourceHearing();
         [Min(0f)] public float InvestigateTime = 5f;
 
         [Header("Attack")]

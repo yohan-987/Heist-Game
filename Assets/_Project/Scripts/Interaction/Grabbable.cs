@@ -43,9 +43,15 @@ namespace Game.Interaction
         {
             get
             {
-                // The Spawner may add the identity after Awake, so resolve lazily.
+                // Resolve lazily: the Spawner may add the identity after Awake, and objects placed by
+                // hand in a scene have none until something asks for it.
                 if (_identity == null) _identity = GetComponent<EntityIdentity>();
-                return _identity != null ? _identity.Id : EntityId.None;
+                if (_identity == null || !_identity.Id.IsValid)
+                {
+                    Services.Spawner.EnsureIdentity(gameObject);
+                    _identity = GetComponent<EntityIdentity>();
+                }
+                return _identity.Id;
             }
         }
 

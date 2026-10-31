@@ -9,7 +9,7 @@ namespace Game.Player
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
     [RequireComponent(typeof(PlayerStats))]
-    public sealed class PlayerMotor : MonoBehaviour
+    public sealed class PlayerMotor : MonoBehaviour, ISpeedModifierTarget
     {
         [Header("Speeds (m/s)")]
         [SerializeField, Min(0f)] private float _walkSpeed = 3.5f;
@@ -48,6 +48,9 @@ namespace Game.Player
         private float _verticalVelocity;
         private float _strideAccumulator;
         private bool _crouching;
+
+        /// <summary>Outside slowdowns (an enemy holding the player, etc.). Carry slowdown is separate.</summary>
+        public SpeedModifiers Modifiers { get; } = new SpeedModifiers();
 
         public bool IsGrounded => _controller != null && _controller.isGrounded;
         public bool IsSprinting { get; private set; }
@@ -139,6 +142,7 @@ namespace Game.Player
         {
             float speed = _crouching ? _crouchSpeed : (IsSprinting ? _sprintSpeed : _walkSpeed);
             if (_carry != null) speed *= Mathf.Clamp01(_carry.SpeedMultiplier);
+            speed *= Modifiers.Multiplier;
 
             Vector3 target = wish * speed;
             _horizontalVelocity = Vector3.MoveTowards(_horizontalVelocity, target, _acceleration * dt);

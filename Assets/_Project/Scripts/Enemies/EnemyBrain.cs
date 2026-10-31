@@ -11,7 +11,9 @@ namespace Game.Enemies
         Investigate,
         Chase,
         Attack,
-        Cooldown
+        Cooldown,
+        /// <summary>Scared away by a thrown apple.</summary>
+        Flee
     }
 
     /// <summary>
@@ -44,6 +46,8 @@ namespace Game.Enemies
         private float _attackTimer;
         private IPlayerAvatar _target;
         private Vector3 _lastKnownTargetPosition;
+        private Vector3 _fleeFrom;
+        private float _fleeTimer;
 
         public EnemyState State => _fsm.Current;
         public EnemyDefinition Definition => _definition;
@@ -60,7 +64,8 @@ namespace Game.Enemies
                 .Add(EnemyState.Investigate, onEnter: _ => BeginInvestigate(), onUpdate: UpdateInvestigate)
                 .Add(EnemyState.Chase, onEnter: _ => BeginChase(), onUpdate: UpdateChase)
                 .Add(EnemyState.Attack, onEnter: _ => { _agent.ResetPath(); _attackTimer = 0f; }, onUpdate: UpdateAttack)
-                .Add(EnemyState.Cooldown, onEnter: _ => _agent.ResetPath(), onUpdate: UpdateCooldown);
+                .Add(EnemyState.Cooldown, onEnter: _ => _agent.ResetPath(), onUpdate: UpdateCooldown)
+                .Add(EnemyState.Flee, onEnter: _ => BeginFlee(), onUpdate: UpdateFlee);
         }
 
         private void Start()
@@ -74,9 +79,17 @@ namespace Game.Enemies
             _fsm.Start(EnemyState.Idle);
         }
 
-        private void OnEnable() => Services.Events.Subscribe<NoiseEmitted>(HandleNoiseEvent);
+        private void OnEnable()
+        {
+            Services.Events.Subscribe<NoiseEmitted>(HandleNoiseEvent);
+            Services.Events.Subscribe<RepelBurst>(OnRepel);
+        }
 
-        private void OnDisable() => Services.Events.Unsubscribe<NoiseEmitted>(HandleNoiseEvent);
+        private void OnDisable()
+        {
+            Services.Events.Unsubscribe<NoiseEmitted>(HandleNoiseEvent);
+            Services.Events.Unsubscribe<RepelBurst>(OnRepel);
+        }
 
         private void Update()
         {
@@ -102,10 +115,14 @@ namespace Game.Enemies
             if (_definition == null) return;
             // Already hunting or recovering: noise doesn't override that.
             var s = _fsm.Current;
-            if (s == EnemyState.Chase || s == EnemyState.Attack || s == EnemyState.Cooldown) return;
+            if (s == EnemyState.Chase || s == EnemyState.Attack || s == EnemyState.Cooldown || s == EnemyState.Flee) return;
+
+            // Some noise types (music) are ignored by doctors entirely.
+            float sensitivity = _definition.HearingSensitivity * _definition.Hearing.Get(noise.Source);
+            if (sensitivity <= 0f) return;
 
             float distance = Vector3.Distance(transform.position, noise.Position);
-            float perceived = NoiseMath.Perceived(noise.Loudness, distance, _definition.HearingSensitivity);
+            float perceived = NoiseMath.Perceived(noise.Loudness, distance, sensitivity);
             if (!EnemySenses.ShouldReactToNoise(perceived, _definition.HearingThreshold)) return;
 
             _investigatePoint = noise.Position;
@@ -123,7 +140,7 @@ namespace Game.Enemies
                 _target = seen;
                 _lastKnownTargetPosition = seen.Transform.position;
                 _timeSinceSeen = 0f;
-                if (s != EnemyState.Chase && s != EnemyState.Attack && s != EnemyState.Cooldown)
+                if (s != EnemyState.Chase && s != EnemyState.Attack && s != EnemyState.Cooldown && s != EnemyState.Flee)
                     _fsm.TransitionTo(EnemyState.Chase);
             }
             else
@@ -287,6 +304,43 @@ namespace Game.Enemies
         {
             if (_fsm.TimeInState < _definition.AttackCooldown) return;
             _fsm.TransitionTo(_timeSinceSeen < 1f ? EnemyState.Chase : EnemyState.Idle);
+        }
+
+        // ---------- Fleeing (apples) ----------
+
+        private void OnRepel(RepelBurst burst)
+        {
+            if (_definition == null) return;
+            if (Vector3.Distance(transform.position, burst.Position) > burst.Radius) return;
+
+            _fleeFrom = burst.Position;
+            _fleeTimer = burst.Duration;
+
+            if (_fsm.Current == EnemyState.Flee) BeginFlee(); // already running: just refresh
+            else _fsm.TransitionTo(EnemyState.Flee);
+        }
+
+        private void BeginFlee()
+        {
+            _agent.speed = _definition.FleeSpeed;
+            _agent.isStopped = false;
+
+            Vector3 goal = EnemySenses.AwayPoint(transform.position, _fleeFrom, _definition.FleeDistance);
+            if (NavMesh.SamplePosition(goal, out var hit, 6f, NavMesh.AllAreas)) goal = hit.position;
+            _agent.SetDestination(goal);
+        }
+
+        private void UpdateFlee(float dt)
+        {
+            _fleeTimer -= dt;
+            if (_fleeTimer <= 0f)
+            {
+                _fsm.TransitionTo(EnemyState.Idle);
+                return;
+            }
+
+            // Reached the far point but still scared: pick another one further away.
+            if (Arrived()) BeginFlee();
         }
 
         private bool Arrived()

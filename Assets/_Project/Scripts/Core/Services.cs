@@ -15,6 +15,14 @@ namespace Game.Core
         private static GameStateMachine _state;
         private static EntityIdProvider _ids;
         private static Spawner _spawner;
+        private static DifficultyProfile _difficulty;
+
+        /// <summary>Current difficulty numbers. Assign a new profile from the menu or level setup.</summary>
+        public static DifficultyProfile Difficulty
+        {
+            get => _difficulty ??= DifficultyProfile.For(DifficultyLevel.Normal);
+            set => _difficulty = value ?? DifficultyProfile.For(DifficultyLevel.Normal);
+        }
 
         public static EventBus Events => _events ??= new EventBus();
         public static GameClock Clock => _clock ??= new GameClock();
@@ -33,6 +41,7 @@ namespace Game.Core
             _state = null;
             _ids = null;
             _spawner = null;
+            _difficulty = null;
         }
     }
 }

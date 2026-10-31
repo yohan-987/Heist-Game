@@ -91,14 +91,16 @@ Assumption to confirm: delivered medicine is both the team quota and the shared 
 
 ## 6. Code Impact
 
-Mostly reuses what exists (noise events, enemy brain, extraction zone, run ledger, state machine). New or changed:
+Implemented in code (Unity-side parts still unverified, see `CODE_STATUS.md`). Mostly reuses what existed (noise events, enemy brain, extraction zone, run ledger, state machine). New or changed:
 
 - `InsanityModel` (pure class, unit tested, same style as `StaminaModel`) and a `PlayerInsanity` component.
 - `NoiseSource.Music` plus a per-source hearing multiplier on `EnemyDefinition`.
 - `EnemyBrain`: add a Flee state; a separate dormant-grabber enemy (Dormant, Waking, Grabbing, Cooldown).
 - A movement-slow hook on the player motor (an `IMovementModifier` list; carry slowdown becomes one entry).
 - `MedicineCounter` extending the extraction zone, and a dose pool on the run ledger.
-- Screen-space crawler effect in the UI layer.
+- Screen-space crawler effect in the UI layer (`CrawlerSwarmModel`, `CrawlerOverlay`).
+
+Implemented as `SpeedModifiers` (rather than `IMovementModifier`) and `MedicineLedger` (the counter itself is an `ExtractionZone`). Deferred to Phase 8: downed state, defibrillator, friendly fire.
 
 ## 7. Open Questions
 

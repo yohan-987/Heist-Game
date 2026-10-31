@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Game.Enemies
 {
-    /// <summary>Pure perception maths for enemies.</summary>
+    /// <summary>Pure perception and movement maths for enemies.</summary>
     public static class EnemySenses
     {
         /// <summary>True if <paramref name="target"/> is inside the view cone (ignores walls).</summary>
@@ -24,6 +24,18 @@ namespace Game.Enemies
         public static bool ShouldReactToNoise(float perceived, float threshold)
         {
             return perceived > 0f && perceived >= threshold;
+        }
+
+        /// <summary>
+        /// A point <paramref name="distance"/> metres from <paramref name="self"/>, directly away from
+        /// <paramref name="threat"/> on the ground plane. Falls back to a fixed direction if they overlap.
+        /// </summary>
+        public static Vector3 AwayPoint(Vector3 self, Vector3 threat, float distance)
+        {
+            Vector3 away = self - threat;
+            away.y = 0f;
+            if (away.sqrMagnitude < 0.0001f) away = new Vector3(1f, 0f, 0f);
+            return self + away.normalized * distance;
         }
     }
 }
