@@ -9,5 +9,7 @@
 | | Render pipeline = URP | Proposed | Confirm in Phase 0 |
 | | Networking stack | Open | Decide after Phase 4.5 spike |
 | | Voice chat solution | Open | Follows networking choice |
-| | Theme, setting, title | Open | Decide before Phase 2 art pass |
+| 2026-10-31 | Theme = haunted mental hospital; loot goes to a medicine counter and compounder | Decided | See GAME_DESIGN.md |
+| | Title | Open | Decide before Phase 2 art pass |
+| | Delivered medicine = team quota and shared dose pool | Proposed | Confirm in playtests |
 | | Art style = stylised low-poly | Proposed | |

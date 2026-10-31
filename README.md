@@ -5,6 +5,7 @@ A solo-developed, physics-driven 3D horror-comedy loot game: grab valuables, car
 - **Engine:** Unity 6 LTS (URP), C#
 - **Platform:** Windows PC (Steam later)
 - **Plan:** see [`docs/ROADMAP.md`](docs/ROADMAP.md)
+- **Design:** see [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md)
 
 ## Opening the project
 
