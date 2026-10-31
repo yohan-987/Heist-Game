@@ -1,7 +1,7 @@
 {
     "name": "Game.LevelGen",
     "rootNamespace": "Game.LevelGen",
-    "references": ["Game.Core"],
+    "references": ["Game.Core", "Game.Items", "Game.Enemies"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

@@ -1,7 +1,7 @@
 {
     "name": "Game.Player",
     "rootNamespace": "Game.Player",
-    "references": ["Game.Core"],
+    "references": ["Game.Core", "Unity.InputSystem"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
