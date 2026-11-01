@@ -15,7 +15,7 @@ Last updated: 2026-10-31. Written without the Unity editor, so everything below 
 | `Economy` | `RunLedger`, `QuotaMath`, `MedicineLedger`, `RunTracker`, `UpgradeDefinition`, `PlayerProfile`, `UpgradeShop` |
 | `UI` | `CrawlerSwarmModel`, `CrawlerOverlay` |
 | `Save` | `SaveService` (atomic write, backup, corrupt-file fallback) |
-| `DevTools` | `CommandRegistry`, `DebugOverlay` |
+| `DevTools` | `CommandRegistry`, `DebugOverlay`, `SandboxRun` |
 
 ## Verified
 
@@ -31,6 +31,8 @@ These need the Unity editor and have never been compiled or run:
 - API names target **Unity 6**: `Rigidbody.linearVelocity`, `linearDamping`, `angularDamping`, `FindObjectsByType`.
 
 ## Setup still needed in the editor
+
+The full click-by-click version is in `docs/UNITY_SETUP.md`. Summary:
 
 1. Copy `ProjectSettings/` and `Packages/` from a fresh 3D (URP) project (see README).
 2. Create the layers with these exact names: `Player`, `Grabbable`, `Held`, `Enemy`, `Level`, `Trigger`, `NoClip`. Then set the collision matrix: `Held` must not collide with `Player`.
