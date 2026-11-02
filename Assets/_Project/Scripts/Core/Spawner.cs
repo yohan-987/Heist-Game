@@ -35,7 +35,7 @@ namespace Game.Core
         /// Gives an object an id if it has none. Spawned objects get one automatically; objects placed
         /// by hand in a scene get one the first time something needs it.
         /// </summary>
-        public EntityId EnsureIdentity(GameObject go)
+        public GameEntityId EnsureIdentity(GameObject go)
         {
             var identity = go.GetComponent<EntityIdentity>();
             if (identity == null) identity = go.AddComponent<EntityIdentity>();

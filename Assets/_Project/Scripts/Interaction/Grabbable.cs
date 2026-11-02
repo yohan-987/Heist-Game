@@ -39,7 +39,7 @@ namespace Game.Interaction
         public bool IsHeld => Holder != null;
         public Rigidbody Body => _body;
         public float Mass => _body != null ? _body.mass : 0f;
-        public EntityId Id
+        public GameEntityId Id
         {
             get
             {

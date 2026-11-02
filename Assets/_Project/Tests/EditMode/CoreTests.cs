@@ -157,7 +157,7 @@ namespace Game.Tests
         [Test]
         public void None_IsInvalid()
         {
-            Assert.IsFalse(EntityId.None.IsValid);
+            Assert.IsFalse(GameEntityId.None.IsValid);
         }
     }
 

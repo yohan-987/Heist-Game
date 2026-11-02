@@ -27,12 +27,12 @@ namespace Game.Items
         public bool IsBroken => _definition != null && CurrentValue <= BaseValue * _definition.BrokenFraction;
         public bool IsHeld => _grabbable != null && _grabbable.IsHeld;
 
-        public EntityId Id
+        public GameEntityId Id
         {
             get
             {
                 if (_identity == null) _identity = GetComponent<EntityIdentity>();
-                return _identity != null ? _identity.Id : EntityId.None;
+                return _identity != null ? _identity.Id : GameEntityId.None;
             }
         }
 

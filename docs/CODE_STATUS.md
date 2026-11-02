@@ -6,7 +6,7 @@ Last updated: 2026-10-31. Written without the Unity editor, so everything below 
 
 | Assembly | Contents |
 |---|---|
-| `Core` | `EventBus`, game events, `EntityId`, `DeterministicRandom`, `StateMachine`, `GameStateMachine`, `GameClock`, `PlayerRegistry`, `Services`, `Spawner`, `Bootstrap`, noise maths and `NoiseEmitter`, layer names, input state struct, `SpeedModifiers`, `DifficultyProfile`, `Compounder`, `JumpscareScheduler` |
+| `Core` | `EventBus`, game events, `GameEntityId`, `DeterministicRandom`, `StateMachine`, `GameStateMachine`, `GameClock`, `PlayerRegistry`, `Services`, `Spawner`, `Bootstrap`, noise maths and `NoiseEmitter`, layer names, input state struct, `SpeedModifiers`, `DifficultyProfile`, `Compounder`, `JumpscareScheduler` |
 | `Player` | `StaminaModel`, `HealthModel`, `PlayerStats`, `InsanityModel`, `PlayerInsanity`, `PlayerInputReader` (Input System), `PlayerLook`, `PlayerMotor` |
 | `Interaction` | `GrabMath`, `Grabbable`, `PlayerGrabber` |
 | `Items` | `ValuableDefinition`, `ValueLoss`, `Valuable`, `ExtractionZone`, `RotModel`, `Apple`, `MusicPlayer` |

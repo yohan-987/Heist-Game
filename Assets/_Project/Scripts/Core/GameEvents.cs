@@ -8,12 +8,12 @@ namespace Game.Core
 
     public readonly struct ValuableDamaged
     {
-        public readonly EntityId Id;
+        public readonly GameEntityId Id;
         public readonly float Lost;
         public readonly float Remaining;
         public readonly Vector3 Position;
 
-        public ValuableDamaged(EntityId id, float lost, float remaining, Vector3 position)
+        public ValuableDamaged(GameEntityId id, float lost, float remaining, Vector3 position)
         {
             Id = id; Lost = lost; Remaining = remaining; Position = position;
         }
@@ -21,10 +21,10 @@ namespace Game.Core
 
     public readonly struct ValuableDelivered
     {
-        public readonly EntityId Id;
+        public readonly GameEntityId Id;
         public readonly float Value;
 
-        public ValuableDelivered(EntityId id, float value)
+        public ValuableDelivered(GameEntityId id, float value)
         {
             Id = id; Value = value;
         }
@@ -32,10 +32,10 @@ namespace Game.Core
 
     public readonly struct ObjectGrabbed
     {
-        public readonly EntityId Id;
+        public readonly GameEntityId Id;
         public readonly int PlayerId;
 
-        public ObjectGrabbed(EntityId id, int playerId)
+        public ObjectGrabbed(GameEntityId id, int playerId)
         {
             Id = id; PlayerId = playerId;
         }
@@ -43,10 +43,10 @@ namespace Game.Core
 
     public readonly struct ObjectReleased
     {
-        public readonly EntityId Id;
+        public readonly GameEntityId Id;
         public readonly int PlayerId;
 
-        public ObjectReleased(EntityId id, int playerId)
+        public ObjectReleased(GameEntityId id, int playerId)
         {
             Id = id; PlayerId = playerId;
         }
@@ -55,10 +55,10 @@ namespace Game.Core
     /// <summary>Published when a held object is thrown (as opposed to dropped).</summary>
     public readonly struct ObjectThrown
     {
-        public readonly EntityId Id;
+        public readonly GameEntityId Id;
         public readonly int PlayerId;
 
-        public ObjectThrown(EntityId id, int playerId)
+        public ObjectThrown(GameEntityId id, int playerId)
         {
             Id = id; PlayerId = playerId;
         }
@@ -121,9 +121,9 @@ namespace Game.Core
     public readonly struct PlayerGrabbedByEnemy
     {
         public readonly int PlayerId;
-        public readonly EntityId EnemyId;
+        public readonly GameEntityId EnemyId;
 
-        public PlayerGrabbedByEnemy(int playerId, EntityId enemyId)
+        public PlayerGrabbedByEnemy(int playerId, GameEntityId enemyId)
         {
             PlayerId = playerId; EnemyId = enemyId;
         }
@@ -132,9 +132,9 @@ namespace Game.Core
     public readonly struct PlayerReleasedByEnemy
     {
         public readonly int PlayerId;
-        public readonly EntityId EnemyId;
+        public readonly GameEntityId EnemyId;
 
-        public PlayerReleasedByEnemy(int playerId, EntityId enemyId)
+        public PlayerReleasedByEnemy(int playerId, GameEntityId enemyId)
         {
             PlayerId = playerId; EnemyId = enemyId;
         }
