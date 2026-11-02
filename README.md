@@ -27,3 +27,7 @@ Run `git lfs install` once per machine before cloning or committing assets.
 ## Layout
 
 All first-party work lives in `Assets/_Project/`. Third-party packs go in `Assets/ThirdParty/` untouched. Full tree and rules are in the roadmap, section 3.
+
+## Project status
+
+See [STATUS.md](STATUS.md) for what is done, tested and still to do, and [docs/UNITY_SETUP.md](docs/UNITY_SETUP.md) for the editor setup guide.

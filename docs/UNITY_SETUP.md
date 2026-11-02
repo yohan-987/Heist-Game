@@ -83,7 +83,7 @@ Create `Assets/_Project/Scenes/Sandbox.unity` (File > New Scene > Basic, then sa
 3. Create the data asset: right-click in the Project window > Create > Game > Valuable. Name it `Valuable_Vase`. Set Display Name, Base Value 500, Mass 3.
 4. Drag `Vase` from the Hierarchy into `Assets/_Project/Prefabs/Valuables` to make a prefab.
 5. Drag that prefab into the asset's **Prefab** field, and drag the asset into the `Valuable` component's **Definition** field on the `Vase` in the scene. Apply the override to the prefab if Unity offers it. Duplicate the vase and put three or four around the player.
-6. Press Play. Look at a vase and hold the left mouse button. It should float in front of you. Release to drop, right mouse to throw, scroll to change the distance, R to rotate. Drop one from a height and look in the Console: a loss in value is the damage system working.
+6. Press Play. Look at a vase and hold the left mouse button. It should float in front of you. Release to drop, right mouse to throw, scroll to change the distance, R to rotate. Damage messages only appear once the run starter from 5.5 is in the scene.
 
 ### 5.4 The medicine counter
 

@@ -19,7 +19,7 @@ Last updated: 2026-10-31. Written without the Unity editor, so everything below 
 
 ## Verified
 
-126 EditMode tests in `Assets/_Project/Tests/EditMode/` were compiled and run outside Unity against small stand-ins for the Unity types they touch. All pass. They cover the event bus, seeded RNG, state machines, noise maths, stamina and health, grab maths, value loss, run ledger and quotas, upgrade shop, enemy senses, layout planning (200 seeds: connected, no overlaps, deterministic, exit room is farthest), spawn budgeting, the command parser and the save round trip. The hospital design adds tests for insanity and swelling, dose maths, the medicine ledger, speed modifiers, difficulty, apple rot, per-source hearing, flee maths, the ground doctor state machine, the spider swarm cap and the jumpscare scheduler.
+126 EditMode tests in `Assets/_Project/Tests/EditMode/` were compiled and run outside Unity against small stand-ins for the Unity types they touch. All pass. They also pass in the Unity Test Runner on 6000.6.7f1 (2026-11-03). They cover the event bus, seeded RNG, state machines, noise maths, stamina and health, grab maths, value loss, run ledger and quotas, upgrade shop, enemy senses, layout planning (200 seeds: connected, no overlaps, deterministic, exit room is farthest), spawn budgeting, the command parser and the save round trip. The hospital design adds tests for insanity and swelling, dose maths, the medicine ledger, speed modifiers, difficulty, apple rot, per-source hearing, flee maths, the ground doctor state machine, the spider swarm cap and the jumpscare scheduler.
 
 ## Not verified
 
