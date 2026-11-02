@@ -3,7 +3,7 @@
     "rootNamespace": "Game.Tests",
     "references": [
         "Game.Core", "Game.Player", "Game.Interaction", "Game.Items", "Game.Enemies",
-        "Game.LevelGen", "Game.Economy", "Game.Save", "Game.DevTools",
+        "Game.LevelGen", "Game.Economy", "Game.Save", "Game.DevTools", "Game.UI",
         "UnityEngine.TestRunner", "UnityEditor.TestRunner"
     ],
     "includePlatforms": ["Editor"],
