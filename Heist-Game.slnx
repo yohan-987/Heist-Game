@@ -1,0 +1,13 @@
+﻿<Solution>
+  <Project Path="Game.Enemies.csproj" />
+  <Project Path="Game.Player.csproj" />
+  <Project Path="Game.UI.csproj" />
+  <Project Path="Game.LevelGen.csproj" />
+  <Project Path="Game.Core.csproj" />
+  <Project Path="Game.Economy.csproj" />
+  <Project Path="Game.Tests.EditMode.csproj" />
+  <Project Path="Game.Interaction.csproj" />
+  <Project Path="Game.Items.csproj" />
+  <Project Path="Game.DevTools.csproj" />
+  <Project Path="Game.Save.csproj" />
+</Solution>
