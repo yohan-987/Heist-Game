@@ -15,3 +15,10 @@
 | | Art style = stylised low-poly | Proposed | |
 | 2026-11-03 | Editor version = Unity 6.6 (6000.6.7f1) for now, not an LTS | Decided | Chosen to avoid a large download. Revisit before real content exists |
 | 2026-11-03 | Renamed `EntityId` to `GameEntityId` | Decided | Unity 6.6 added `UnityEngine.EntityId` |
+| 2026-11-03 | Design v2: loot is consumed and its value committed on delivery | Decided | Fixes the retroactive-value hole. See GAME_DESIGN.md 4.2 |
+| 2026-11-03 | Quota set in doses first; loot budget derived from quota, player count and run length | Decided | GAME_DESIGN.md 4.3 |
+| 2026-11-03 | Baseline pressure 0.25 per second, 5 second last-chance swell, dose gate | Decided | To validate in the Layer 1 playtest gate |
+| 2026-11-03 | Radio is battery-limited, 0.6 per second, strongest source only | Decided | Previous 3 per second bypassed the medicine economy |
+| 2026-11-03 | Quota unlocks the exit and stays unlocked; counter and exit sit in the start wing | Decided | Greed versus safety decision |
+| 2026-11-03 | Build in three layers with a playtest gate after Layer 1 | Decided | Scope control |
+| | UI name for insanity = Pressure | Proposed | Code name stays `Insanity` |

@@ -6,6 +6,10 @@ Last updated: 2026-11-03. Working title: TBD. Unity project on **6000.6.7f1** (U
 
 The code skeleton for Phases 0 to 4 and the hospital design is written. It compiles in Unity, and all 126 EditMode tests pass inside the Unity Test Runner. The player moves and looks in a hand-built Sandbox scene. Grab, throw, delivery, insanity and enemies have not been played yet.
 
+## Design review (2026-11-03)
+
+`docs/GAME_DESIGN.md` was revised to version 2 after two outside reviews and a check against the code. Main fixes: committed loot, quota-first budgeting by player count, slower pressure, a limited radio, fairness rules, a quota-unlocked exit. The code still has the old numbers; the follow-up changes are listed in section 8 of the design.
+
 ## Timeline
 
 | Date | What happened |
