@@ -21,7 +21,7 @@ namespace Game.Economy
         private void OnEnable()
         {
             var bus = Services.Events;
-            bus.Subscribe<ExtractionValueChanged>(OnExtraction);
+            bus.Subscribe<ValuableDelivered>(OnDelivered);
             bus.Subscribe<ValuableDamaged>(OnDamaged);
             bus.Subscribe<PlayerDied>(OnPlayerDied);
             bus.Subscribe<DoseRequested>(OnDoseRequested);
@@ -30,7 +30,7 @@ namespace Game.Economy
         private void OnDisable()
         {
             var bus = Services.Events;
-            bus.Unsubscribe<ExtractionValueChanged>(OnExtraction);
+            bus.Unsubscribe<ValuableDelivered>(OnDelivered);
             bus.Unsubscribe<ValuableDamaged>(OnDamaged);
             bus.Unsubscribe<PlayerDied>(OnPlayerDied);
             bus.Unsubscribe<DoseRequested>(OnDoseRequested);
@@ -46,20 +46,25 @@ namespace Game.Economy
             Publish();
         }
 
-        /// <summary>Ends the run. Succeeds only if the quota is met.</summary>
+        /// <summary>Ends the run. Succeeds only if the exit was unlocked (the quota was reached).</summary>
         public void Finish()
         {
             if (!_active) return;
             _active = false;
-            Services.Events.Publish(new LevelCompleted(_medicine.QuotaMet, _medicine.Banked, _medicine.QuotaDoses));
+            Services.Events.Publish(new LevelCompleted(_medicine.ExitUnlocked, _medicine.Banked, _medicine.QuotaDoses));
         }
 
-        private void OnExtraction(ExtractionValueChanged evt)
+        private void OnDelivered(ValuableDelivered evt)
         {
             if (!_active) return;
-            _value.SetDelivered(evt.Total);
-            _medicine.SetDeliveredValue(evt.Total);
+
+            bool wasUnlocked = _medicine.ExitUnlocked;
+            _medicine.Commit(evt.Value);
+            _value.SetDelivered(_medicine.CommittedValue);
             Publish();
+
+            if (!wasUnlocked && _medicine.ExitUnlocked)
+                Services.Events.Publish(new ExitUnlocked(_medicine.Banked, _medicine.QuotaDoses));
         }
 
         private void OnDamaged(ValuableDamaged evt)

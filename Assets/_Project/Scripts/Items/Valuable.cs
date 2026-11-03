@@ -27,6 +27,14 @@ namespace Game.Items
         public bool IsBroken => _definition != null && CurrentValue <= BaseValue * _definition.BrokenFraction;
         public bool IsHeld => _grabbable != null && _grabbable.IsHeld;
 
+        /// <summary>True once the compounder has accepted it. Its value is committed and it can no longer change.</summary>
+        public bool IsDelivered { get; private set; }
+
+        /// <summary>Current movement speed, used to tell when a delivered item has settled.</summary>
+        public float Speed => _body != null ? _body.linearVelocity.magnitude : 0f;
+
+        public void MarkDelivered() => IsDelivered = true;
+
         public GameEntityId Id
         {
             get
@@ -59,7 +67,7 @@ namespace Game.Items
 
         private void OnCollisionEnter(Collision collision)
         {
-            if (_definition == null) return;
+            if (_definition == null || IsDelivered) return;
             if (Time.time - _lastHitTime < _hitCooldown) return;
 
             float impulse = collision.impulse.magnitude;

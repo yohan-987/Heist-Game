@@ -91,17 +91,25 @@ namespace Game.Core
         }
     }
 
-    /// <summary>A radio (or similar) is playing. Players inside the radius are calmed.</summary>
+    /// <summary>
+    /// A radio (or similar) is playing. Players inside the radius are calmed. Each source repeats this
+    /// event while it plays; a receiver treats each report as valid for <see cref="Validity"/> seconds
+    /// and only the strongest source counts.
+    /// </summary>
     public readonly struct MusicPlaying
     {
+        public readonly int SourceId;
         public readonly Vector3 Position;
         public readonly float Radius;
-        /// <summary>Insanity relief for this tick at point-blank range; falls off with distance.</summary>
-        public readonly float Relief;
+        /// <summary>Pressure relief per second at point-blank range; falls off with distance.</summary>
+        public readonly float ReliefPerSecond;
+        /// <summary>How long this report stays valid, in seconds.</summary>
+        public readonly float Validity;
 
-        public MusicPlaying(Vector3 position, float radius, float relief)
+        public MusicPlaying(int sourceId, Vector3 position, float radius, float reliefPerSecond, float validity)
         {
-            Position = position; Radius = radius; Relief = relief;
+            SourceId = sourceId; Position = position; Radius = radius;
+            ReliefPerSecond = reliefPerSecond; Validity = validity;
         }
     }
 
@@ -224,6 +232,29 @@ namespace Game.Core
     {
         public readonly int PlayerId;
         public DoseDenied(int playerId) { PlayerId = playerId; }
+    }
+
+    /// <summary>Why a player's own dose request was stopped before it reached the medicine pool.</summary>
+    public enum DoseRefusal
+    {
+        TooCalm,
+        Cooldown
+    }
+
+    /// <summary>The dose gate stopped a request. No dose was taken from the pool.</summary>
+    public readonly struct DoseRefused
+    {
+        public readonly int PlayerId;
+        public readonly DoseRefusal Reason;
+        public DoseRefused(int playerId, DoseRefusal reason) { PlayerId = playerId; Reason = reason; }
+    }
+
+    /// <summary>The quota was reached for the first time. The exit stays open from now on.</summary>
+    public readonly struct ExitUnlocked
+    {
+        public readonly int BankedDoses;
+        public readonly int QuotaDoses;
+        public ExitUnlocked(int bankedDoses, int quotaDoses) { BankedDoses = bankedDoses; QuotaDoses = quotaDoses; }
     }
 
     // ---------- Run flow ----------

@@ -11,7 +11,7 @@ namespace Game.Core
     {
         public DifficultyLevel Level { get; }
 
-        /// <summary>Multiplies how fast insanity rises.</summary>
+        /// <summary>Multiplies how fast pressure (insanity) rises.</summary>
         public float InsanityRateMultiplier { get; }
 
         /// <summary>Multiplies the value needed to produce one dose (higher = harder).</summary>
@@ -23,13 +23,22 @@ namespace Game.Core
         /// <summary>Multiplies how many doctors the level may spawn.</summary>
         public float EnemyBudgetMultiplier { get; }
 
-        private DifficultyProfile(DifficultyLevel level, float insanityRate, float valuePerDose, bool applesRot, float enemyBudget)
+        /// <summary>Multiplies the pressure added by events (apples, grabs, scares).</summary>
+        public float EventPressureMultiplier { get; }
+
+        /// <summary>Share of spawned value a team is expected to deliver undamaged. Used to size the loot budget.</summary>
+        public float CollectionEfficiency { get; }
+
+        private DifficultyProfile(DifficultyLevel level, float insanityRate, float valuePerDose, bool applesRot,
+            float enemyBudget, float eventPressure, float collectionEfficiency)
         {
             Level = level;
             InsanityRateMultiplier = insanityRate;
             ValuePerDoseMultiplier = valuePerDose;
             ApplesRot = applesRot;
             EnemyBudgetMultiplier = enemyBudget;
+            EventPressureMultiplier = eventPressure;
+            CollectionEfficiency = collectionEfficiency;
         }
 
         public static DifficultyProfile For(DifficultyLevel level)
@@ -37,9 +46,11 @@ namespace Game.Core
             switch (level)
             {
                 case DifficultyLevel.High:
-                    return new DifficultyProfile(level, insanityRate: 1.5f, valuePerDose: 1.25f, applesRot: true, enemyBudget: 1.5f);
+                    return new DifficultyProfile(level, insanityRate: 1.25f, valuePerDose: 1.2f, applesRot: true,
+                        enemyBudget: 1.4f, eventPressure: 1.25f, collectionEfficiency: 0.6f);
                 default:
-                    return new DifficultyProfile(DifficultyLevel.Normal, insanityRate: 1f, valuePerDose: 1f, applesRot: false, enemyBudget: 1f);
+                    return new DifficultyProfile(DifficultyLevel.Normal, insanityRate: 1f, valuePerDose: 1f, applesRot: false,
+                        enemyBudget: 1f, eventPressure: 1f, collectionEfficiency: 0.65f);
             }
         }
     }

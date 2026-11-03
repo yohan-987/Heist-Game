@@ -146,7 +146,7 @@ The radio is an alternative survival strategy, not a replacement for medicine.
 - **Supply:** about one per player per level, in kitchens and fruit bowls. They are physical props (grab and throw). No inventory in version 1.
 - **Single use.** It shatters on its first impact within a few seconds of the throw.
 - **Effect:** doctors within about 9 metres flee for about 6 seconds, even if the apple misses. Then they return to patrol, not to chasing you.
-- **Cost:** +10 Pressure to the thrower, and a small impact noise (about 4 metres), so it is never free.
+- **Cost:** +10 Pressure to the thrower, and an impact noise (about 12 metres, just beyond the 9 metre flee radius, so a doctor at the edge investigates instead of fleeing), so it is never free.
 - Thrown at a ground doctor it breaks the hold at once.
 - **High difficulty only:** apples rot over about 90 seconds and lose their effect.
 
@@ -269,19 +269,23 @@ Test in a real scene, with people who are not the designer.
 
 Already in code (Unity-side parts still partly untested, see `STATUS.md` and `CODE_STATUS.md`): `InsanityModel`, `PlayerInsanity`, `MedicineLedger`, `Compounder`, `RunTracker`, `Music` noise and per-source hearing, Flee state, `Apple`, `MusicPlayer`, `GroundDoctor`, `SpiderNest`, `JumpscareScheduler`, `CrawlerSwarmModel`, `SpeedModifiers`, `DifficultyProfile`.
 
-**Version 2 changes still to make** (the code still has the old numbers and behaviour):
+**Version 2 changes:**
 
-1. **Commit accepted loot.** `ExtractionZone` consumes valuables; `MedicineLedger` adds committed value instead of recomputing from what is inside. Add tests: accepted loot cannot be removed, cannot lose value, cannot count twice.
-2. **Latch the exit unlock** in the ledger or `RunTracker`.
-3. **Dose gate:** minimum Pressure and cooldown, with the swell exception.
-4. **Defaults:** baseline 0.25 per second, swell 5 seconds.
-5. **Radio:** battery, 0.6 per second, strongest source only.
-6. **Quota-first budgeting:** `LevelDefinition` holds quota per player count, doses per player and efficiency; `LevelBuilder` derives the budget from the player count and difficulty. Test at 1, 2, 3 and 4 players.
-7. **Counter and exit in the start wing;** weight loot toward the far wing. This changes the planner's current "extraction room is the farthest room" rule.
-8. **Apples:** impact noise, flee-to-patrol.
-9. **Doctor hit model** and safe-room rules; health regeneration in safe rooms.
-10. **Threat Director** (hazard counting and no pile-ons).
-11. **Hallucination rules** (Phase 7).
+| # | Change | State |
+|---|---|---|
+| 1 | Commit accepted loot: `ExtractionZone` consumes valuables, `MedicineLedger.Commit` only ever adds | **Done** |
+| 2 | Latch the exit unlock (`ExitUnlocked`), plus `ExitZone` to finish the run | **Done** |
+| 3 | Dose gate: minimum pressure and cooldown, swell exception (`DoseGate`, `DoseRefused` event) | **Done** |
+| 4 | Defaults: baseline 0.25 per second, swell 5 seconds, event pressure from grabs and scares | **Done** |
+| 5 | Radio: battery (`BatteryModel`), 0.6 per second, strongest source only (`MusicReliefMixer`) | **Done** |
+| 6 | Quota-first budgeting by player count (`EconomyPlanner`, `LevelDefinition`, `LevelBuilder.Build(seed, players)`) | **Done** |
+| 7 | Counter and exit in the start wing (`CounterInStartRoom`, on by default) | **Partly done.** Loot is not yet weighted toward the far wing |
+| 8 | Apples: impact noise; flee ends in idle, then patrol | **Done** |
+| 9 | Doctor hit model, safe rooms, health regeneration | Not started |
+| 10 | Threat Director (hazard counting, no pile-ons) | Not started |
+| 11 | Hallucination rules | Not started (Phase 7) |
+
+The pure logic for items 1 to 6 and 8 is unit tested (159 tests, run outside Unity). The Unity-side scripts have not been compiled or played yet.
 
 ## 9. Decisions and Open Questions
 

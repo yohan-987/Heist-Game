@@ -18,6 +18,8 @@ namespace Game.Items
         [SerializeField, Min(0f)] private float _insanityOnThrow = 10f;
         [Tooltip("A thrown apple only counts if it hits something within this many seconds.")]
         [SerializeField, Min(0.5f)] private float _armedSeconds = 4f;
+        [Tooltip("The splat is heard this far. Keep it larger than the repel radius so doctors just outside it investigate.")]
+        [SerializeField, Min(0f)] private float _splatNoiseRadius = 12f;
 
         [Header("Rot (high difficulty only)")]
         [SerializeField, Min(1f)] private float _rotSeconds = 90f;
@@ -88,6 +90,10 @@ namespace Game.Items
                 Services.Events.Publish(new RepelBurst(transform.position, _repelRadius * effect, _repelSeconds * effect));
                 Services.Events.Publish(new InsanityAdded(_throwerId, _insanityOnThrow));
             }
+
+            // Never free: the splat itself is a noise, whatever the apple's condition.
+            if (_splatNoiseRadius > 0f)
+                Services.Events.Publish(new NoiseEmitted(transform.position, _splatNoiseRadius, NoiseSource.Impact));
 
             Services.Spawner.Despawn(gameObject);
         }

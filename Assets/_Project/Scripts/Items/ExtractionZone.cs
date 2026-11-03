@@ -5,25 +5,28 @@ using UnityEngine;
 namespace Game.Items
 {
     /// <summary>
-    /// Trigger volume where valuables are delivered. Only valuables fully inside the box and not
-    /// currently held count. Publishes <see cref="ExtractionValueChanged"/> whenever the total changes,
-    /// so a smashed vase inside the zone drains the total.
+    /// The compounder's intake. A valuable that is fully inside, not held and settled for a moment is
+    /// accepted: its current value is committed permanently (<see cref="ValuableDelivered"/>) and the
+    /// object is consumed. Damage before acceptance costs value; nothing can change it afterwards.
     /// </summary>
     [RequireComponent(typeof(BoxCollider))]
     public sealed class ExtractionZone : MonoBehaviour
     {
         [SerializeField, Min(0.05f)] private float _checkInterval = 0.2f;
+        [Tooltip("How long a valuable must lie still inside before it is accepted.")]
+        [SerializeField, Min(0f)] private float _settleSeconds = 0.5f;
+        [Tooltip("Faster than this (m/s) counts as still moving.")]
+        [SerializeField, Min(0f)] private float _maxSettleSpeed = 0.6f;
 
         private readonly HashSet<Valuable> _candidates = new HashSet<Valuable>();
-        private readonly List<Valuable> _counted = new List<Valuable>();
+        private readonly Dictionary<Valuable, float> _settled = new Dictionary<Valuable, float>();
+        private readonly List<Valuable> _scratch = new List<Valuable>();
         private BoxCollider _box;
         private float _timer;
-        private float _lastTotal = -1f;
-        private int _lastCount = -1;
 
-        public float Total { get; private set; }
-        public int Count => _counted.Count;
-        public IReadOnlyList<Valuable> Counted => _counted;
+        /// <summary>Total value this intake has accepted.</summary>
+        public float CommittedTotal { get; private set; }
+        public int AcceptedCount { get; private set; }
 
         private void Awake()
         {
@@ -31,19 +34,16 @@ namespace Game.Items
             _box.isTrigger = true;
         }
 
-        private void OnEnable() => Services.Events.Subscribe<ValuableDamaged>(OnDamaged);
-
         private void OnDisable()
         {
-            Services.Events.Unsubscribe<ValuableDamaged>(OnDamaged);
             _candidates.Clear();
-            _counted.Clear();
+            _settled.Clear();
         }
 
         private void OnTriggerEnter(Collider other)
         {
             var v = other.GetComponentInParent<Valuable>();
-            if (v != null) _candidates.Add(v);
+            if (v != null && !v.IsDelivered) _candidates.Add(v);
         }
 
         private void OnTriggerExit(Collider other)
@@ -52,42 +52,72 @@ namespace Game.Items
             if (v == null) return;
 
             // A valuable can have several colliders; only drop it once none of them overlap the zone.
-            if (!StillOverlapping(v)) _candidates.Remove(v);
+            if (!StillOverlapping(v))
+            {
+                _candidates.Remove(v);
+                _settled.Remove(v);
+            }
         }
 
         private void FixedUpdate()
         {
             _timer += Time.fixedDeltaTime;
             if (_timer < _checkInterval) return;
+
+            float elapsed = _timer;
             _timer = 0f;
-            Recalculate();
+            Process(elapsed);
         }
 
-        private void OnDamaged(ValuableDamaged evt) => Recalculate();
-
-        public void Recalculate()
+        private void Process(float elapsed)
         {
-            _counted.Clear();
-            float total = 0f;
             var bounds = _box.bounds;
 
-            _candidates.RemoveWhere(v => v == null);
-            foreach (var v in _candidates)
-            {
-                if (v.IsHeld) continue;
-                if (!IsFullyInside(v, bounds)) continue;
+            _scratch.Clear();
+            _scratch.AddRange(_candidates);
 
-                _counted.Add(v);
-                total += v.CurrentValue;
-            }
-
-            Total = total;
-            if (!Mathf.Approximately(total, _lastTotal) || _counted.Count != _lastCount)
+            foreach (var v in _scratch)
             {
-                _lastTotal = total;
-                _lastCount = _counted.Count;
-                Services.Events.Publish(new ExtractionValueChanged(total, _counted.Count));
+                if (v == null || v.IsDelivered)
+                {
+                    _candidates.Remove(v);
+                    _settled.Remove(v);
+                    continue;
+                }
+
+                bool ready = !v.IsHeld && v.Speed <= _maxSettleSpeed && IsFullyInside(v, bounds);
+                if (!ready)
+                {
+                    _settled[v] = 0f;
+                    continue;
+                }
+
+                _settled.TryGetValue(v, out float time);
+                time += elapsed;
+                _settled[v] = time;
+
+                if (time >= _settleSeconds) Accept(v);
             }
+        }
+
+        private void Accept(Valuable v)
+        {
+            float value = v.CurrentValue;
+            var id = Services.Spawner.EnsureIdentity(v.gameObject);
+
+            v.MarkDelivered();
+            _candidates.Remove(v);
+            _settled.Remove(v);
+
+            CommittedTotal += value;
+            AcceptedCount++;
+
+            Services.Events.Publish(new ValuableDelivered(id, value));
+            Services.Events.Publish(new ExtractionValueChanged(CommittedTotal, AcceptedCount));
+
+            // Deactivate first: Destroy is deferred, and a half-gone object must not keep colliding.
+            v.gameObject.SetActive(false);
+            Services.Spawner.Despawn(v.gameObject);
         }
 
         private static bool IsFullyInside(Valuable v, Bounds zone)

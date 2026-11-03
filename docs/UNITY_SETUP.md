@@ -90,7 +90,8 @@ Create `Assets/_Project/Scenes/Sandbox.unity` (File > New Scene > Basic, then sa
 1. GameObject > Create Empty. Name it `MedicineCounter`. Position (10, 1, 0). Layer **Trigger**.
 2. Add `ExtractionZone`. It adds a Box Collider by itself. Set the box size to (4, 2, 4).
 3. Optional but handy: add a flat cube on the floor under it with a bright material so you can see where it is.
-4. Carry a vase in, drop it, and make sure it sits fully inside the box. The zone only counts valuables completely inside and not held.
+4. Carry a vase in and let go, making sure it lies fully inside the box. After it has been still for about half a second, the machine **swallows** it: the vase disappears and its value is committed for good. Nothing can change that value afterwards, and nothing can be pulled back out.
+5. Add an **ExitZone** later (Part 6, step 7) for leaving the level.
 
 ### 5.5 Start a run
 
@@ -99,6 +100,9 @@ Nothing starts a run in a bare scene, so add the helper:
 1. GameObject > Create Empty. Name it `Run`.
 2. Add `SandboxRun`. It adds `RunTracker` for you. Quota Doses 3, Value Per Dose 500.
 3. Press Play. The Console should print a line like `Run: delivered 0, lost 0, banked doses 0 ...`. Deliver a vase and it should update. Two vases of 500 value mean 2 banked doses.
+4. Without this object, a vase dropped in the counter is still swallowed, but nothing records it.
+
+**If your Player was set up before the design update:** the `PlayerInsanity` component in the scene still holds the old saved numbers (rate 0.4, swell 3). Click the component's three-dot menu and choose **Reset**, then check the Rate shows 0.25 and Swell Seconds 5. Scripts only apply new defaults to components that are added fresh.
 
 Do **not** use the `Bootstrap` component in this scene. It loads a scene called `MainMenu`, which does not exist yet.
 
@@ -113,11 +117,12 @@ Tick these off before touching anything else. If one fails, fix it before moving
 1. Walk (WASD), look, sprint (Shift), crouch (Ctrl), jump (Space). Stamina drains while sprinting and recovers.
 2. Grab, hold, rotate, throw a vase. Heavier objects slow you down.
 3. Drop a vase hard. It loses value. Rest it gently. It loses none.
-4. Deliver vases to the counter. The Console shows banked doses rising. Break one inside the zone: the total drops.
-5. Wait about two minutes. Insanity climbs. Press **Q** to take a dose when you have one banked. Insanity falls by 40. With no dose banked, nothing happens.
-6. Let insanity hit 100 without a dose. After three seconds the player bursts (the balloon death).
+4. Deliver vases to the counter. Each one is swallowed and the Console shows banked doses rising once 500 value has been committed. Drop a vase hard before delivering: it should be worth less. After delivery nothing can change its value.
+5. Wait about 80 seconds. Pressure (insanity) climbs by 0.25 per second. Below 20 a dose is refused and not used up. Above that, press **Q** to take a dose when you have one banked: pressure falls by 40. Pressing Q again within 10 seconds is refused too.
+6. Let pressure hit 100 without a dose. You get a **5 second** warning, during which a dose still saves you. After that the player bursts (the balloon death).
+7. Exit: create an empty object named `Exit` on a spot near the start, layer **Trigger**, add `ExitZone` (it adds a Box Collider; make it about 4 by 2 by 4 metres). Deliver enough value to reach the quota, then stand in it. The run should finish as a success once every living player is inside.
 
-If all six work, the core loop works and you are ready for the enemy parts.
+If all seven work, the core loop works and you are ready for the enemy parts.
 
 ## Part 7. Add the enemy and hospital pieces, one at a time
 
@@ -158,7 +163,7 @@ After the sandbox is solid:
 1. Greybox 3 to 5 rooms with ProBuilder: a start room, a corridor, a ward, an operating room, and a medicine counter room.
 2. On each room root add `RoomAuthoring`. Set its size in grid cells (one cell is 8 m by 8 m), add door sockets on cell edges, and drag in child transforms for valuable spawns, enemy spawns and nuisance spawns. Start rooms need a player spawn. The extraction room needs an inactive child holding the `ExtractionZone`, assigned as the Extraction Zone Root.
 3. Create a **LevelDefinition** asset, fill the room pools and valuable pool, and set Room Count.
-4. Add `LevelBuilder` to a scene object, assign the definition, and call `Build(seed)` from a test script. Feed `QuotaDoses` and `ValuePerDose` from the result into `RunTracker.Begin`.
+4. Add `LevelBuilder` to a scene object, assign the definition, and call `Build(seed)` from a test script. Pass the player count as the second argument (`Build(seed, players)`); it sizes the quota and loot budget. Feed `QuotaDoses` and `ValuePerDose` from the result into `RunTracker.Begin`. If the Console warns that the level cannot be won, add valuable spawn points.
 
 ## Troubleshooting
 

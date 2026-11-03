@@ -24,13 +24,19 @@ namespace Game.LevelGen
         public readonly int QuotaDoses;
         /// <summary>The level's base value per dose. Pass this to <c>RunTracker.Begin</c>, which applies difficulty itself.</summary>
         public readonly float ValuePerDose;
+        /// <summary>Loot value the economy plan asked for.</summary>
+        public readonly float Budget;
+        /// <summary>Least value that could ever win this level. Spawned value below this means the level cannot be won.</summary>
+        public readonly float MinimumWinnableValue;
 
         public LevelBuildResult(LevelLayout layout, float spawnedValue, Transform playerSpawn,
-            int valuables, int enemies, int nuisances, int quotaDoses, float valuePerDose)
+            int valuables, int enemies, int nuisances, int quotaDoses, float valuePerDose,
+            float budget, float minimumWinnableValue)
         {
             Layout = layout; SpawnedValue = spawnedValue; PlayerSpawn = playerSpawn;
             ValuableCount = valuables; EnemyCount = enemies; NuisanceCount = nuisances;
             QuotaDoses = quotaDoses; ValuePerDose = valuePerDose;
+            Budget = budget; MinimumWinnableValue = minimumWinnableValue;
         }
     }
 
@@ -48,7 +54,11 @@ namespace Game.LevelGen
 
         public LevelBuildResult? Last { get; private set; }
 
-        public LevelBuildResult Build(int seed)
+        /// <summary>
+        /// Builds a level. <paramref name="playerCount"/> sizes the quota and the loot budget so the level
+        /// stays winnable for that many players (GAME_DESIGN 4.3).
+        /// </summary>
+        public LevelBuildResult Build(int seed, int playerCount = 1)
         {
             if (_definition == null) throw new System.InvalidOperationException("LevelBuilder has no LevelDefinition.");
             if (_root == null) _root = transform;
@@ -74,8 +84,15 @@ namespace Game.LevelGen
                 instances.Add(go.GetComponent<RoomAuthoring>());
             }
 
-            var extractionRoom = instances[layout.ExtractionRoomIndex];
-            if (extractionRoom.ExtractionZoneRoot != null) extractionRoom.ExtractionZoneRoot.SetActive(true);
+            var plan = EconomyPlanner.Plan(playerCount, Services.Difficulty,
+                _definition.BasePressurePerSecond, _definition.RunMinutes * 60f, _definition.EventPressure,
+                _definition.ValuePerDose, _definition.BaseQuotaDoses, _definition.QuotaDosesPerPlayer);
+            float budget = _definition.UseManualBudget ? _definition.ManualValueBudget : plan.Budget;
+
+            int counterIndex = _definition.CounterInStartRoom ? layout.StartRoomIndex : layout.ExtractionRoomIndex;
+            var counterRoom = instances[counterIndex];
+            if (counterRoom.ExtractionZoneRoot != null) counterRoom.ExtractionZoneRoot.SetActive(true);
+            else Debug.LogWarning($"Room '{counterRoom.name}' holds the compounder but has no Extraction Zone Root assigned.", counterRoom);
 
             SealDoors(layout);
 
@@ -85,19 +102,21 @@ namespace Game.LevelGen
             var nuisanceRng = new DeterministicRandom(seed ^ 0x5EED3);
 
             float spawnedValue = 0f;
-            int valuableCount = PopulateValuables(layout, instances, valuableRng, ref spawnedValue);
+            int valuableCount = PopulateValuables(layout, instances, valuableRng, budget, ref spawnedValue);
             int enemyCount = PopulateEnemies(layout, instances, enemyRng);
             int nuisanceCount = PopulateNuisances(layout, instances, nuisanceRng);
 
             if (_navMeshBaker is INavMeshBaker baker) baker.Bake(_root);
 
-            // Quota is a share of what the level could produce, so it is always winnable.
-            float scaledValuePerDose = _definition.ValuePerDose * Services.Difficulty.ValuePerDoseMultiplier;
-            int quotaDoses = Compounder.QuotaDoses(spawnedValue, _definition.QuotaFraction, scaledValuePerDose);
+            // Quota comes from the plan (quota first); the loot budget was derived from it. If the rooms
+            // could not hold enough loot, say so loudly: the level cannot be won.
+            if (spawnedValue < plan.MinimumValue)
+                Debug.LogWarning($"Level cannot be won: spawned value {spawnedValue:0} is below the {plan.MinimumValue:0} needed " +
+                                 $"for {plan.Players} player(s) (quota {plan.QuotaDoses} doses). Add valuable spawn points or raise item values.");
 
             var spawn = instances[layout.StartRoomIndex].PlayerSpawn;
             var result = new LevelBuildResult(layout, spawnedValue, spawn, valuableCount, enemyCount,
-                nuisanceCount, quotaDoses, _definition.ValuePerDose);
+                nuisanceCount, plan.QuotaDoses, _definition.ValuePerDose, budget, plan.MinimumValue);
             Last = result;
             return result;
         }
@@ -149,7 +168,7 @@ namespace Game.LevelGen
             }
         }
 
-        private int PopulateValuables(LevelLayout layout, List<RoomAuthoring> rooms, DeterministicRandom rng, ref float totalValue)
+        private int PopulateValuables(LevelLayout layout, List<RoomAuthoring> rooms, DeterministicRandom rng, float budget, ref float totalValue)
         {
             var pool = _definition.ValuablePool;
             if (pool == null || pool.Length == 0) return 0;
@@ -163,7 +182,7 @@ namespace Game.LevelGen
                 if (pool[i] != null && pool[i].Prefab != null)
                     options.Add(new SpawnOption(i, pool[i].BaseValue, pool[i].SpawnWeight));
 
-            var picks = SpawnPlanner.Choose(rng, options, _definition.ValueBudget, points.Count);
+            var picks = SpawnPlanner.Choose(rng, options, budget, points.Count);
 
             for (int n = 0; n < picks.Count; n++)
             {

@@ -19,13 +19,24 @@ namespace Game.LevelGen
 
         [Header("Valuables")]
         public ValuableDefinition[] ValuablePool;
-        [Min(0f)] public float ValueBudget = 6000f;
 
-        [Header("Medicine")]
+        [Header("Economy (see GAME_DESIGN 4.3)")]
+        [Tooltip("Target length of a run. The loot budget is sized so that everyone can stay alive for this long and still meet the quota.")]
+        [Min(1f)] public float RunMinutes = 10f;
         [Tooltip("Delivered value needed to produce one dose (before difficulty scaling).")]
         [Min(1f)] public float ValuePerDose = 500f;
-        [Tooltip("Quota is this fraction of the doses the spawned value could produce, so a level is always winnable.")]
-        [Range(0.1f, 1f)] public float QuotaFraction = 0.55f;
+        [Tooltip("Quota in doses is base + per-player * players.")]
+        [Min(0)] public int BaseQuotaDoses = 4;
+        [Min(0)] public int QuotaDosesPerPlayer = 2;
+        [Tooltip("Pressure per player per run from apples, grabs and scares. Used to size the budget.")]
+        [Min(0f)] public float EventPressure = 33f;
+        [Tooltip("Passive pressure rise per second. Must match PlayerInsanity.")]
+        [Min(0f)] public float BasePressurePerSecond = 0.25f;
+        [Tooltip("Tick to ignore the formula and spawn exactly the manual budget (for quick test levels).")]
+        public bool UseManualBudget;
+        [Min(0f)] public float ManualValueBudget = 6000f;
+        [Tooltip("The compounder and exit live in the start room (safe, next to home). Untick to use the farthest room.")]
+        public bool CounterInStartRoom = true;
 
         [Header("Doctors (lethal)")]
         public EnemyDefinition[] EnemyPool;

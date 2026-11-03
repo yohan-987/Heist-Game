@@ -8,7 +8,7 @@ The code skeleton for Phases 0 to 4 and the hospital design is written. It compi
 
 ## Design review (2026-11-03)
 
-`docs/GAME_DESIGN.md` was revised to version 2 after two outside reviews and a check against the code. Main fixes: committed loot, quota-first budgeting by player count, slower pressure, a limited radio, fairness rules, a quota-unlocked exit. The code still has the old numbers; the follow-up changes are listed in section 8 of the design.
+`docs/GAME_DESIGN.md` was revised to version 2 after two outside reviews and a check against the code. Main fixes: committed loot, quota-first budgeting by player count, slower pressure, a limited radio, fairness rules, a quota-unlocked exit. The economy changes (committed loot, exit latch, dose gate, 0.25 baseline, radio battery, quota-first budgeting, apple noise, exit zone) are now in code with tests. The doctor hit model, safe rooms, Threat Director and hallucination rules are not yet. See section 8 of the design.
 
 ## Timeline
 
@@ -40,8 +40,8 @@ All under `Assets/_Project/Scripts/`. See `docs/CODE_STATUS.md` for the per-asse
 
 | Check | Result |
 |---|---|
-| 126 EditMode tests, run outside Unity (Mono, stand-ins for Unity types) | All pass |
-| 126 EditMode tests, Unity Test Runner (6000.6.7f1), 2026-11-03 | **All pass** |
+| 159 EditMode tests, run outside Unity (Mono, stand-ins for Unity types), after the design v2 code changes | All pass |
+| 126 EditMode tests, Unity Test Runner (6000.6.7f1), 2026-11-03 | **All pass.** The 33 newer tests have not been run in Unity yet |
 | Console warnings during the run | 2, both expected: the save tests deliberately write a corrupt file |
 | MonoBehaviour code at runtime | Only player walking and looking confirmed so far |
 

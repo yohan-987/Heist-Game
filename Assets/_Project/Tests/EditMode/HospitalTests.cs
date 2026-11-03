@@ -144,24 +144,111 @@ namespace Game.Tests
     public class MedicineLedgerTests
     {
         [Test]
-        public void DeliveredValue_BecomesDoses()
+        public void CommittedValue_BecomesDoses_AndTheRemainderCarriesOver()
         {
             var l = new MedicineLedger(quotaDoses: 3, valuePerDose: 500f);
-            l.SetDeliveredValue(1250f);
+            l.Commit(1250f);
             Assert.AreEqual(2, l.Produced);
             Assert.AreEqual(2, l.Banked);
+            Assert.AreEqual(250f, l.Remainder, 0.001f);
+            Assert.AreEqual(0.5f, l.RemainderFraction, 0.001f);
+
+            l.Commit(250f);
+            Assert.AreEqual(3, l.Produced);
+            Assert.AreEqual(0f, l.Remainder, 0.001f);
+        }
+
+        [Test]
+        public void SmallCommits_AddUpToADose()
+        {
+            var l = new MedicineLedger(1, 500f);
+            l.Commit(300f);
+            l.Commit(300f);
+            Assert.AreEqual(1, l.Produced);
+            Assert.AreEqual(100f, l.Remainder, 0.001f);
         }
 
         [Test]
         public void TakingADose_ReducesWhatTheTeamBanks()
         {
             var l = new MedicineLedger(2, 500f);
-            l.SetDeliveredValue(1000f);
-            Assert.IsTrue(l.QuotaMet);
+            l.Commit(1000f);
+            Assert.IsTrue(l.ExitUnlocked);
 
             Assert.IsTrue(l.TryConsume());
             Assert.AreEqual(1, l.Banked);
-            Assert.IsFalse(l.QuotaMet, "a dose taken is a dose not banked");
+        }
+
+        [Test]
+        public void ExitStaysUnlocked_EvenAfterEveryDoseIsTaken()
+        {
+            var l = new MedicineLedger(2, 500f);
+            l.Commit(1000f);
+            l.TryConsume();
+            l.TryConsume();
+
+            Assert.AreEqual(0, l.Banked);
+            Assert.IsTrue(l.ExitUnlocked, "taking doses after the quota was reached must not lock the exit again");
+            Assert.AreEqual(0, l.SurplusDoses);
+        }
+
+        [Test]
+        public void ExitIsNotUnlocked_IfDosesWereTakenBeforeTheQuotaWasReached()
+        {
+            var l = new MedicineLedger(2, 500f);
+            l.Commit(500f);
+            l.TryConsume();
+            l.Commit(500f);
+            Assert.AreEqual(1, l.Banked);
+            Assert.IsFalse(l.ExitUnlocked);
+
+            l.Commit(500f);
+            Assert.AreEqual(2, l.Banked);
+            Assert.IsTrue(l.ExitUnlocked);
+        }
+
+        [Test]
+        public void SurplusDoses_AreWhatIsBankedBeyondTheQuota()
+        {
+            var l = new MedicineLedger(2, 500f);
+            l.Commit(1500f);
+            Assert.AreEqual(1, l.SurplusDoses);
+
+            var locked = new MedicineLedger(5, 500f);
+            locked.Commit(1500f);
+            Assert.AreEqual(0, locked.SurplusDoses, "no bonus before the exit unlocks");
+        }
+
+        [Test]
+        public void Commit_IgnoresZeroNegativeAndInvalidAmounts()
+        {
+            var l = new MedicineLedger(2, 500f);
+            Assert.IsFalse(l.Commit(0f));
+            Assert.IsFalse(l.Commit(-5f));
+            Assert.IsFalse(l.Commit(float.NaN));
+            Assert.AreEqual(0f, l.CommittedValue);
+        }
+
+        [Test]
+        public void CommittedValue_NeverDecreases()
+        {
+            var l = new MedicineLedger(2, 500f);
+            l.Commit(500f);
+            l.Commit(-100f);
+            Assert.AreEqual(500f, l.CommittedValue);
+            Assert.AreEqual(1, l.Produced);
+        }
+
+        [Test]
+        public void DosesAlreadyTaken_AreNeverUnmade()
+        {
+            var l = new MedicineLedger(3, 500f);
+            l.Commit(1000f);
+            l.TryConsume();
+            l.Commit(10f);
+            Assert.AreEqual(1, l.Banked);
+            Assert.AreEqual(1, l.Consumed);
+            Assert.AreEqual(2, l.Produced);
         }
 
         [Test]
@@ -173,33 +260,23 @@ namespace Game.Tests
         }
 
         [Test]
-        public void DamageAfterDelivery_DrainsTheBank_NeverBelowZero()
-        {
-            var l = new MedicineLedger(2, 500f);
-            l.SetDeliveredValue(1000f);
-            l.TryConsume();                 // 1 left
-            l.SetDeliveredValue(400f);      // value smashed: now produces 0
-            Assert.AreEqual(0, l.Banked);
-            Assert.IsFalse(l.TryConsume());
-        }
-
-        [Test]
-        public void ZeroQuota_IsNeverMet()
+        public void ZeroQuota_NeverUnlocksTheExit()
         {
             var l = new MedicineLedger(0, 500f);
-            l.SetDeliveredValue(5000f);
-            Assert.IsFalse(l.QuotaMet);
+            l.Commit(5000f);
+            Assert.IsFalse(l.ExitUnlocked);
         }
 
         [Test]
         public void Reset_StartsFresh()
         {
             var l = new MedicineLedger(2, 500f);
-            l.SetDeliveredValue(2000f);
+            l.Commit(2000f);
             l.TryConsume();
             l.Reset(5, 250f);
             Assert.AreEqual(0, l.Consumed);
-            Assert.AreEqual(0f, l.DeliveredValue);
+            Assert.AreEqual(0f, l.CommittedValue);
+            Assert.IsFalse(l.ExitUnlocked);
             Assert.AreEqual(5, l.QuotaDoses);
             Assert.AreEqual(250f, l.ValuePerDose);
         }

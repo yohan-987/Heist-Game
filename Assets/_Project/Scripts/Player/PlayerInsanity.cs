@@ -10,16 +10,28 @@ namespace Game.Player
     [RequireComponent(typeof(PlayerStats))]
     public sealed class PlayerInsanity : MonoBehaviour
     {
-        [SerializeField, Min(0f)] private float _ratePerSecond = 0.4f;
+        [SerializeField, Min(0f)] private float _ratePerSecond = 0.25f;
         [SerializeField, Min(0f)] private float _doseRelief = 40f;
         [SerializeField, Range(0f, 100f)] private float _uneasyThreshold = 50f;
         [SerializeField, Range(0f, 100f)] private float _terrifiedThreshold = 75f;
-        [SerializeField, Min(0.1f)] private float _swellSeconds = 3f;
+        [SerializeField, Min(0.1f)] private float _swellSeconds = 5f;
         [SerializeField, Min(0f)] private float _publishStep = 0.5f;
+
+        [Header("Dose gate")]
+        [Tooltip("A dose is refused (and not taken from the pool) below this pressure.")]
+        [SerializeField, Range(0f, 100f)] private float _minDosePressure = 20f;
+        [SerializeField, Min(0f)] private float _doseCooldown = 10f;
+
+        [Header("Pressure from events")]
+        [SerializeField, Min(0f)] private float _pressureOnGrab = 8f;
+        [SerializeField, Min(0f)] private float _pressureOnScare = 5f;
 
         private PlayerStats _stats;
         private IPlayerInputSource _input;
         private bool _burstHandled;
+        private DoseGate _gate;
+        private readonly MusicReliefMixer _music = new MusicReliefMixer();
+        private float _sinceDose = 999f;
         private float _lastPublishedValue = -999f;
         private InsanityStage _lastPublishedStage = InsanityStage.Calm;
 
@@ -29,6 +41,7 @@ namespace Game.Player
         {
             _stats = GetComponent<PlayerStats>();
             _input = GetComponent<IPlayerInputSource>();
+            _gate = new DoseGate(_minDosePressure, _doseCooldown);
             Model = new InsanityModel(_ratePerSecond, _doseRelief, _uneasyThreshold, _terrifiedThreshold, _swellSeconds);
         }
 
@@ -38,6 +51,8 @@ namespace Game.Player
             bus.Subscribe<DoseGranted>(OnDoseGranted);
             bus.Subscribe<MusicPlaying>(OnMusic);
             bus.Subscribe<InsanityAdded>(OnInsanityAdded);
+            bus.Subscribe<PlayerGrabbedByEnemy>(OnGrabbed);
+            bus.Subscribe<Jumpscare>(OnScare);
         }
 
         private void OnDisable()
@@ -46,6 +61,8 @@ namespace Game.Player
             bus.Unsubscribe<DoseGranted>(OnDoseGranted);
             bus.Unsubscribe<MusicPlaying>(OnMusic);
             bus.Unsubscribe<InsanityAdded>(OnInsanityAdded);
+            bus.Unsubscribe<PlayerGrabbedByEnemy>(OnGrabbed);
+            bus.Unsubscribe<Jumpscare>(OnScare);
         }
 
         private void Update()
@@ -56,9 +73,13 @@ namespace Game.Player
             if (dt <= 0f) return;
 
             Model.Tick(dt, Services.Difficulty.InsanityRateMultiplier);
+            _sinceDose += dt;
 
-            if (_input != null && _input.Current.TakeMedicinePressed)
-                Services.Events.Publish(new DoseRequested(_stats.PlayerId));
+            // Music is continuous relief from the strongest source in earshot (radios never stack).
+            float musicRate = _music.CurrentRate(Services.Clock.Now);
+            if (musicRate > 0f) Model.Relieve(musicRate * dt);
+
+            if (_input != null && _input.Current.TakeMedicinePressed) RequestDose();
 
             PublishIfChanged();
 
@@ -71,9 +92,23 @@ namespace Game.Player
             }
         }
 
+        private void RequestDose()
+        {
+            var check = _gate.Check(Model.Value, Model.IsSwelling, _sinceDose);
+            if (check != DoseCheck.Allowed)
+            {
+                var reason = check == DoseCheck.TooCalm ? DoseRefusal.TooCalm : DoseRefusal.Cooldown;
+                Services.Events.Publish(new DoseRefused(_stats.PlayerId, reason));
+                return;
+            }
+
+            Services.Events.Publish(new DoseRequested(_stats.PlayerId));
+        }
+
         private void OnDoseGranted(DoseGranted evt)
         {
             if (evt.PlayerId != _stats.PlayerId) return;
+            _sinceDose = 0f;
             Model.TakeDose();
             PublishIfChanged(force: true);
         }
@@ -84,14 +119,33 @@ namespace Game.Player
             // Closer to the radio means more relief; outside the radius means none.
             float strength = NoiseMath.Perceived(evt.Radius, distance);
             if (strength <= 0f) return;
-            Model.Relieve(evt.Relief * strength);
+
+            _music.Add(evt.SourceId, evt.ReliefPerSecond * strength, Services.Clock.Now + evt.Validity);
+        }
+
+        private void OnGrabbed(PlayerGrabbedByEnemy evt)
+        {
+            if (evt.PlayerId != _stats.PlayerId) return;
+            AddPressure(_pressureOnGrab);
+        }
+
+        private void OnScare(Jumpscare evt)
+        {
+            // Scares are shown to the local player only, so only the local player pays for them.
+            if (evt.Kind != ScareKind.Scripted || !_stats.IsLocal) return;
+            AddPressure(_pressureOnScare);
+        }
+
+        private void AddPressure(float amount)
+        {
+            Model.Add(amount * Services.Difficulty.EventPressureMultiplier);
+            PublishIfChanged(force: true);
         }
 
         private void OnInsanityAdded(InsanityAdded evt)
         {
             if (evt.PlayerId != _stats.PlayerId) return;
-            Model.Add(evt.Amount);
-            PublishIfChanged(force: true);
+            AddPressure(evt.Amount);
         }
 
         private void PublishIfChanged(bool force = false)

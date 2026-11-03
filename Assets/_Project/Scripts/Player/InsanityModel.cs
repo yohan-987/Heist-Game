@@ -25,11 +25,11 @@ namespace Game.Player
         public bool Burst { get; private set; }
 
         public InsanityModel(
-            float ratePerSecond = 0.4f,
+            float ratePerSecond = 0.25f,
             float doseRelief = 40f,
             float uneasyThreshold = 50f,
             float terrifiedThreshold = 75f,
-            float swellDuration = 3f)
+            float swellDuration = 5f)
         {
             RatePerSecond = ratePerSecond;
             DoseRelief = doseRelief;
