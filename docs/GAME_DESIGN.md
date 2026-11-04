@@ -28,10 +28,10 @@ A follow-up review found gaps in version 2 itself. Each item below was checked a
 
 | Gap in version 2 | Why it hurts | Fix in version 2.1 |
 |---|---|---|
-| 40 percent of all value in the farthest third of rooms | A team that never reaches the vault wing could not meet the quota | Vault holds about 20 to 25 percent, and the nearest two thirds of rooms must hold at least 1.2 times the minimum winnable value (4.2) |
+| 40 percent of all value in the farthest third of rooms | A team that never reaches the vault wing could not meet the quota | The nearest two thirds of rooms must hold at least 1.2 times the minimum winnable value, which caps the vault at **20 percent on normal and 25 percent on high** (4.2) |
 | The dose gate was described as stopping griefing | It only limits waste and opportunistic use; a determined player can still drain the pool | Wording corrected; doses taken are tracked per player and shown on the HUD and results screen (4.1) |
 | Radio could be played while carried | Carrying a playing radio gives calm with no cost of standing still | The radio only plays when set down; the numbers are restated on one basis (4.5) |
-| First delivery at 2:00 to 3:30, but Pressure 50 arrives at about 3:20 | The first dose could be due before any loot is delivered | First delivery targeted by 3:00 (4.2, 5) |
+| First delivery at 2:00 to 3:30, but Pressure 50 arrives at about 3:00 once the 1:30 scare adds 5 | The first dose could be due before any loot is delivered | First delivery targeted by 3:00, and the introductory scare adds no Pressure, which keeps Pressure 50 at about 3:20 (4.1, 4.2, 5) |
 | Doctor hit model left numbers and timing open | Unfair hits cannot be tuned from a vague spec | Damage, protection, knockback, wind-up and regeneration are specified (4.4) |
 | Hazards counted without classes | Cosmetic effects could block real threats from spawning | Four hazard classes; cosmetic effects are not counted (4.9) |
 | Failure payout of 25 percent could beat succeeding | Failing on purpose could pay better than winning | Payout deferred until tuned, with the rule that failing never beats succeeding (4.9) |
@@ -92,7 +92,7 @@ Naming: the player-facing term is **Pressure** (a gauge that fits the balloon de
 ### 4.2 Loot and the Compounder
 
 - **Loot sources:** abandoned medical equipment, instruments, staff belongings, broken electronics, research gear, hidden contraband. Patients are never looted.
-- **Placement:** some value is weighted toward the **far wing** (the vault wing), so greed means distance, but not enough to make it mandatory. The vault holds about **20 to 25 percent** of total value. **Guaranteed-value rule:** the nearest two thirds of the rooms must hold at least **1.2 times the minimum winnable value** (v × (Q + P × D), see 4.3), so a team that never enters the vault wing can still meet the quota with careful handling.
+- **Placement:** some value is weighted toward the **far wing** (the vault wing), so greed means distance, but not enough to make it mandatory. **Guaranteed-value rule:** the nearest two thirds of the rooms must hold at least **1.2 times the minimum winnable value R**, where R = v × (Q + P × D) (see 4.3). Total spawned value is R ÷ E, so the farthest third can hold at most **1 − 1.2 × E** of it: **22 percent at E = 0.65, 28 percent at E = 0.60**. The rule is authoritative and the vault share follows from it: use **20 percent on normal and 25 percent on high**. (At 25 percent on normal the nearest rooms would hold only 1.15 R, which breaks the rule.) A team that never enters the vault wing can then still meet the quota with careful handling.
 - **Counter location:** the compounder is in the **pharmacy wing next to the start room**. The first haul is short. The target is a **first delivery by 3:00**, so the first dose is banked before Pressure reaches 50 (the first hallucination) at about 3:20.
 - **Accepting loot is a transaction:**
   1. A valuable is fully inside the intake, not held, and settled for about 0.5 seconds.
@@ -169,6 +169,7 @@ The radio is an alternative survival strategy, not a replacement for medicine.
 ### 4.8 Scares and Hallucinations
 
 - A fixed set of scripted scares per level, placed deterministically from the seed. Each fires at most once per run.
+- The **first scare (the introductory one, at about 1:30) is cosmetic and adds no Pressure.** Later scripted scares add +5 each. This keeps Pressure 50 near 3:20; without it, 180 s × 0.25 + 5 reaches 50 at 3:00.
 - Global minimum gap of about 45 seconds between **scripted scares**. The gap does not apply to hallucinations or nuisance enemies, which follow 4.6 and 4.9.
 - No scripted scares in safe rooms, and none during the swell warning.
 - Pressure-driven hallucinations start at 50 and ramp up to 100.
@@ -223,9 +224,9 @@ High is harder mainly because there is more to haul and less margin, not because
 | Time | What happens |
 |---|---|
 | 0:00 to 1:30 | Calm. Leave the safe wing, find the first valuables, learn the carry. No pressure events |
-| about 1:30 | First scripted scare, in a ward |
+| about 1:30 | First scripted scare, in a ward. Cosmetic, no Pressure |
 | 2:00 to 3:00 | First doctor encounter. **First delivery to the compounder, targeted by 3:00** |
-| 3:00 to 3:20 | The first dose is banked. Pressure reaches 50 at about 3:20 |
+| 3:00 to 3:20 | The first dose is banked. Pressure reaches 50 at about 3:20 if nothing else adds Pressure (an apple throw brings it about 40 seconds earlier) |
 | 4:00 to 7:00 | Wider exploration. Radios, apples, nuisance enemies. Heavier loot in the far wing |
 | 7:00 to 9:00 | Quota reached, exit unlocks |
 | 9:00 to 12:00 | Greed decision, then the exit |
@@ -312,6 +313,7 @@ Already in code (Unity-side parts still partly untested, see `STATUS.md` and `CO
 | 13 | Per-player dose tracking in the ledger and HUD | Not implemented |
 | 14 | Radio pauses while carried | Not implemented |
 | 15 | `PlayerBurst` must bypass the downed state (Phase 8) | Not implemented |
+| 16 | The first scripted scare adds no Pressure (`PlayerInsanity.OnScare` currently adds +5 to every local scare) | Not implemented |
 
 The pure logic for items 1 to 6 and 8 is unit tested (159 tests, run outside Unity; 126 of them also in Unity). The Unity-side scripts have not been compiled or played yet. Code for items 7 and 9 to 15 is deliberately paused until Layer 1 runs in Unity.
 
