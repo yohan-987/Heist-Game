@@ -1,7 +1,7 @@
 # Game Design
 
 Working title: TBD. Theme: a haunted mental hospital. Solo-first, co-op ready.
-Status: **version 2, design review of 2026-11-03.** Every number is a starting value that has been checked arithmetically (see section 4.3) but not yet playtested. Tune in playtests, not in theory.
+Status: **version 2.1.** Version 2 came from the design review of 2026-11-03; a second review of the same day was checked against the design and the code and applied on 2026-11-04 (section 0). Every number is a starting value that has been checked arithmetically (see section 4.3) but not yet playtested. Tune in playtests, not in theory.
 
 ---
 
@@ -21,6 +21,22 @@ Version 1 had a strong idea (loot becomes medicine, medicine keeps you alive) bu
 | Level ended at an undefined point; counter and exit undefined | No greed-versus-safety decision | Quota **unlocks** the exit; the player chooses when to leave (4.10) |
 | Loot "in beds" | Stealing from sleeping patients clashes with the tone rule | Loot is equipment and staff belongings; patients are scenery (1, 4.2, 10) |
 | Everything planned for the first playable | Too many interacting systems to debug at once | Three build layers with playtest gates (6) |
+
+### Second review (applied 2026-11-04)
+
+A follow-up review found gaps in version 2 itself. Each item below was checked against the design and the code before it was accepted.
+
+| Gap in version 2 | Why it hurts | Fix in version 2.1 |
+|---|---|---|
+| 40 percent of all value in the farthest third of rooms | A team that never reaches the vault wing could not meet the quota | Vault holds about 20 to 25 percent, and the nearest two thirds of rooms must hold at least 1.2 times the minimum winnable value (4.2) |
+| The dose gate was described as stopping griefing | It only limits waste and opportunistic use; a determined player can still drain the pool | Wording corrected; doses taken are tracked per player and shown on the HUD and results screen (4.1) |
+| Radio could be played while carried | Carrying a playing radio gives calm with no cost of standing still | The radio only plays when set down; the numbers are restated on one basis (4.5) |
+| First delivery at 2:00 to 3:30, but Pressure 50 arrives at about 3:20 | The first dose could be due before any loot is delivered | First delivery targeted by 3:00 (4.2, 5) |
+| Doctor hit model left numbers and timing open | Unfair hits cannot be tuned from a vague spec | Damage, protection, knockback, wind-up and regeneration are specified (4.4) |
+| Hazards counted without classes | Cosmetic effects could block real threats from spawning | Four hazard classes; cosmetic effects are not counted (4.9) |
+| Failure payout of 25 percent could beat succeeding | Failing on purpose could pay better than winning | Payout deferred until tuned, with the rule that failing never beats succeeding (4.9) |
+| Dead, downed and burst players undefined at the exit | Co-op exit and death rules were ambiguous | Dead players can be left, downed players count as alive, and the burst never leaves a player downed (4.10, 4.11) |
+| Section 8 labelled untested code as "Done" | Overstated progress | Labels renamed; see section 8 |
 
 ---
 
@@ -69,15 +85,15 @@ Naming: the player-facing term is **Pressure** (a gauge that fits the balloon de
 
 - **Events add Pressure** on top of the baseline, so danger costs medicine: an apple throw +10, a ground doctor grab +8, a scripted scare +5. Over an average run these add about 33.
 - **Stages are readable.** At 50: mild hallucinations begin and the screen edges tighten. At 75: the heartbeat becomes audible, the character visibly puffs up, scare frequency rises. At 100: a swelling animation and a loud warning, then the burst.
-- **Dose gate (shared pool protection).** A dose is refused, and not consumed, if your Pressure is below 20. After a dose there is a 10-second cooldown. The cooldown does not apply during the swell warning. This stops hoarding, wasting and griefing.
+- **Dose gate.** A dose is refused, and not consumed, if your Pressure is below 20. After a dose there is a 10-second cooldown, which does not apply during the swell warning. This limits accidental waste and opportunistic use of the shared pool. It does not stop a determined griefer, so doses taken are tracked **per player** and shown on the HUD and the results screen, which makes abuse visible to the team. (Per-player tracking is planned and not in code yet.)
 - **Doses are drawn from the pool anywhere** through a wrist injector (key Q). No trip back to the counter is needed.
 - **Make the tax visible.** The HUD always shows: doses banked, quota, doses you have taken, and your own Pressure. In co-op, each teammate's Pressure shows as a ring around their name tag.
 
 ### 4.2 Loot and the Compounder
 
 - **Loot sources:** abandoned medical equipment, instruments, staff belongings, broken electronics, research gear, hidden contraband. Patients are never looted.
-- **Placement:** value is weighted toward the **far wing** (the vault wing), so greed means distance. Roughly 40 percent of total value sits in the farthest third of the rooms.
-- **Counter location:** the compounder is in the **pharmacy wing next to the start room**. The first haul is short, so the first dose arrives before the first hallucination at about 200 seconds.
+- **Placement:** some value is weighted toward the **far wing** (the vault wing), so greed means distance, but not enough to make it mandatory. The vault holds about **20 to 25 percent** of total value. **Guaranteed-value rule:** the nearest two thirds of the rooms must hold at least **1.2 times the minimum winnable value** (v × (Q + P × D), see 4.3), so a team that never enters the vault wing can still meet the quota with careful handling.
+- **Counter location:** the compounder is in the **pharmacy wing next to the start room**. The first haul is short. The target is a **first delivery by 3:00**, so the first dose is banked before Pressure reaches 50 (the first hallucination) at about 3:20.
 - **Accepting loot is a transaction:**
   1. A valuable is fully inside the intake, not held, and settled for about 0.5 seconds.
   2. Its current value is read.
@@ -88,13 +104,13 @@ Naming: the player-facing term is **Pressure** (a gauge that fits the balloon de
 
 ### 4.3 Medicine Economy and Budgeting
 
-The level must always be winnable by a competent team. The loot budget is **derived**, not guessed.
+The level must be winnable by a competent team. The budget makes it winnable **in expectation** (a team that collects at efficiency E gathers enough on average). The guaranteed-value rule in 4.2 makes it winnable **in the worst layout** too, because the quota never depends on the vault wing alone. The loot budget is **derived**, not guessed.
 
 Let:
 - Q = quota in doses, **4 + 2 per player** (6, 8, 10, 12 for 1 to 4 players)
 - P = number of players
-- D = doses each player is expected to need over a 10-minute run (**3 normal, 4 high**), which covers baseline rise plus about 33 pressure from events, with about one dose of slack
-- E = expected collection efficiency, the share of spawned value that is actually delivered undamaged (**0.65 normal, 0.60 high**)
+- D = doses each player is expected to need over a 10-minute run: the smallest whole number n where baseline rise r × T plus event pressure H minus 40 × n stays below 100. Normal: r = 0.25, T = 600 s, H about 33, so n = 2 would end at 103 (a burst) and n = 3 ends at about **63**, so **D = 3**. High: r = 0.3125, H about 41 (events scaled by 1.25), so n = 3 would end at about 109 and n = 4 ends at about **69**, so **D = 4**. The formula counts total Pressure and assumes each dose is taken at 40 or more, so none is wasted. Playtests must check the timeline, not only the total
+- E = expected collection efficiency, the share of spawned value that is actually delivered undamaged (**0.65 normal, 0.60 high**). Measure it as two factors: **reachability** (the share of spawned value a player ever picks up) times **handling** (the share of that which arrives undamaged), so a low E can be traced to the level layout or to the carrying
 - v = value per dose (500 normal, 600 high)
 
 **Loot budget = v × (Q + P × D) ÷ E**
@@ -118,19 +134,19 @@ At an average item value of about 450, a four-player normal level needs roughly 
 - Zombified doctors patrol, investigate noise, chase and attack. Reuses the existing enemy brain.
 - They hear footsteps, impacts and drops. They **ignore music** so that the radio is a real option and not suicide.
 - **Flee** when an apple bursts nearby (4.7). After fleeing a doctor goes back to patrol, not straight to chase.
-- **Hit model:** a doctor hit deals heavy damage (about 60 of 100 health), knocks the player back and gives 2 seconds of protection. One mistake is a scare, two is death.
-- **Safe rooms:** the start wing and the pharmacy wing. Doctors and ground doctors never enter. Standing in a safe room restores health slowly (about 20 seconds to full).
+- **Hit model:** every attack has a **wind-up of at least 0.75 seconds**, readable by sound and animation. A hit deals **60 damage** out of 100, knocks the player back and grants **2 seconds of protection**. One mistake is a scare, two is death. There is **no health regeneration outside safe rooms**, so a damaged player has a reason to go back.
+- **Safe rooms:** the start wing and the pharmacy wing. Doctors and ground doctors never enter. Standing in a safe room restores **5 health per second** (full in 20 seconds).
 - Doctors cannot be killed in version 1. Players manage them with sound, doors, apples and hiding.
 
 ### 4.5 Radio (music)
 
 The radio is an alternative survival strategy, not a replacement for medicine.
 
-- A radio is a physical prop. Hold it and press the use key (E) to toggle it. Place it down to make a calm zone.
-- **Relief:** 0.6 Pressure per second at full strength, falling with distance. Net of the baseline that is +0.35 per second while it plays.
-- **Battery:** 40 seconds of playback per radio, not rechargeable in version 1. One radio is worth about 0.6 of a dose per player in range, and about 2.4 doses for a full team.
+- A radio is a physical prop. Hold it and press the use key (E) to switch it on, then **set it down** to make a calm zone. A radio that is carried is paused, so calm always costs standing still.
+- **Relief:** 0.6 Pressure per second at full strength, falling with distance. Baseline rise is 0.25 per second, so the gauge **falls 0.35 per second** while it plays.
+- **Battery:** 40 seconds of playback per radio, not rechargeable in version 1. Measured the same way as a dose (Pressure prevented), a full battery gives 40 × 0.6 = 24 relief, which is **0.6 of a dose** per player in range, and about 2.4 doses for a full team. The gauge itself only falls by 14 (24 minus the 10 the baseline adds in 40 seconds). Do not compare the 14 with a dose's 40; compare the 24 with it.
 - **No stacking:** only the strongest radio in range counts.
-- **Placement:** about one radio per two players per level, in the wards, not in safe rooms.
+- **Placement:** radios per level = max(1, ceil(P ÷ 2)), placed in the wards, not in safe rooms.
 - It emits `Music` noise, which doctors ignore. **Nuisance enemies** (4.6) react to it, and the longer it plays, the more they come.
 - Choosing to stand still for 40 seconds in the open is the price.
 
@@ -153,7 +169,7 @@ The radio is an alternative survival strategy, not a replacement for medicine.
 ### 4.8 Scares and Hallucinations
 
 - A fixed set of scripted scares per level, placed deterministically from the seed. Each fires at most once per run.
-- Global minimum gap of about 45 seconds between scares.
+- Global minimum gap of about 45 seconds between **scripted scares**. The gap does not apply to hallucinations or nuisance enemies, which follow 4.6 and 4.9.
 - No scripted scares in safe rooms, and none during the swell warning.
 - Pressure-driven hallucinations start at 50 and ramp up to 100.
 - **Hallucinations are harmless and readable:**
@@ -166,24 +182,24 @@ The radio is an alternative survival strategy, not a replacement for medicine.
 
 A small system that keeps fear from turning into frustration.
 
-1. **Telegraph first.** Every lethal or hard-control effect gives at least 1.5 seconds of sound and visual warning.
-2. **Two-hazard cap.** At most two hazards are active on one player at once (chasing doctor, grab, spider swarm, scripted scare). Others wait.
+1. **Telegraph first.** Every lethal or hard-control effect gives at least 1.5 seconds of sound and visual warning before it can land. For a doctor the telegraph covers noticing and charging you, and the strike itself still has its own wind-up of at least 0.75 seconds (4.4).
+2. **Two-hazard cap.** At most two hazards are active on one player at once. Hazards belong to four classes: **lethal** (chasing doctor), **hard-control** (ground doctor grab), **disruptive** (spider swarm, scripted scare) and **cosmetic** (hallucinations, fake sounds). Cosmetic effects are **not counted**. All hazards go through one shared manager, so no system can bypass the cap.
 3. **No pile-ons.** Ground doctors do not wake and spiders do not arrive while a doctor is chasing that player or is within about 15 metres.
 4. **Last chance.** The swell warning always allows a dose.
 5. **Explainable deaths.** The results screen states the cause (burst, doctor, and so on).
-6. **A loss still pays something** (rate to be tuned; the starting idea is 25 percent of committed value as money).
+6. **A loss still pays something**, but the rate is left open until tuned (a starting idea is 25 percent of committed value). Rule: **failing on purpose must never pay more than succeeding.**
 
 ### 4.10 Extraction and Exit
 
 - The exit is the front door of the start wing.
 - **Quota unlocks the exit.** The first time banked doses reach the quota, the exit opens (an alarm bell rings). It **stays unlocked** even if doses are taken afterwards. Before unlocking, taking a dose delays the team. After unlocking, it only reduces the bonus.
-- **Greed decision:** leave now, or go back out for more value. Each surplus dose banked at exit pays a bonus (rate tuned in the meta-progression phase).
-- **Success:** quota unlocked and all living players inside the exit zone.
+- **Greed decision:** leave now, or go back out for more value. Surplus doses = max(0, doses banked at exit minus quota). Each surplus dose pays a bonus (rate tuned in the meta-progression phase).
+- **Success:** quota unlocked and every **living** player inside the exit zone. A dead player can be left behind. A downed player (co-op) counts as alive and must be revived or carried.
 - **Failure:** all players dead. In solo, dying ends the run.
 
 ### 4.11 Co-op (Phase 8)
 
-- **Downed state:** a player at zero health is downed, not dead, in co-op.
+- **Downed state:** a player at zero health is downed, not dead, in co-op. The Pressure burst is the exception: it kills outright and never leaves a player downed, so a swelling player cannot be revived into a second burst.
 - **Defibrillator:** revives a downed teammate. On a standing player it deals damage (friendly fire), so it needs careful aim.
 - **Rescue dose:** a teammate can inject a swelling player.
 - Physics-heavy co-op is not bolted on later. Grab ownership, object sync, enemy authority and the medicine ledger need a networking model, which the Phase 4.5 spike decides. The request and grant events already keep dose logic host-friendly.
@@ -208,8 +224,8 @@ High is harder mainly because there is more to haul and less margin, not because
 |---|---|
 | 0:00 to 1:30 | Calm. Leave the safe wing, find the first valuables, learn the carry. No pressure events |
 | about 1:30 | First scripted scare, in a ward |
-| 2:00 to 3:30 | First doctor encounter. First delivery to the compounder |
-| about 3:20 | Pressure reaches 50. The first dose is due and already banked |
+| 2:00 to 3:00 | First doctor encounter. **First delivery to the compounder, targeted by 3:00** |
+| 3:00 to 3:20 | The first dose is banked. Pressure reaches 50 at about 3:20 |
 | 4:00 to 7:00 | Wider exploration. Radios, apples, nuisance enemies. Heavier loot in the far wing |
 | 7:00 to 9:00 | Quota reached, exit unlocks |
 | 9:00 to 12:00 | Greed decision, then the exit |
@@ -238,7 +254,7 @@ The design is large. Build it in layers, and do not move on until the previous l
 - Networked physics, downed state, defibrillator, friendly fire
 - More maps and enemies, audio and art polish
 
-The code for Layer 2 already exists. It stays out of the scenes until Layer 1 passes its gate.
+Most Layer 2 systems already exist at code level (radio, ground doctor, spiders, scripted scares, high difficulty). The **Threat Director and the hallucination rules do not**. Layer 2 code stays out of the scenes until Layer 1 passes its gate.
 
 ### Layer 1 playtest gate
 
@@ -251,6 +267,14 @@ Test in a real scene, with people who are not the designer.
 | Are doctor encounters tense but fair? | In at least 80 percent of deaths, the player can say what they did wrong |
 | Is dosing a decision? | At least half of testers hesitate before a dose at least once |
 | Is the exit tempting? | At least 40 percent of runs go back for more after the quota unlocks |
+
+Record these numbers in every gate run so the budget can be corrected with data:
+
+- Efficiency E, split into reachability and handling (4.3)
+- Time of the first delivery (target 3:00) and the number of doses banked at 3:20
+- Doses taken per player, and spare doses at the end
+- Value lost to handling, as a percentage
+- Cause of every death
 
 ---
 
@@ -273,19 +297,23 @@ Already in code (Unity-side parts still partly untested, see `STATUS.md` and `CO
 
 | # | Change | State |
 |---|---|---|
-| 1 | Commit accepted loot: `ExtractionZone` consumes valuables, `MedicineLedger.Commit` only ever adds | **Done** |
-| 2 | Latch the exit unlock (`ExitUnlocked`), plus `ExitZone` to finish the run | **Done** |
-| 3 | Dose gate: minimum pressure and cooldown, swell exception (`DoseGate`, `DoseRefused` event) | **Done** |
-| 4 | Defaults: baseline 0.25 per second, swell 5 seconds, event pressure from grabs and scares | **Done** |
-| 5 | Radio: battery (`BatteryModel`), 0.6 per second, strongest source only (`MusicReliefMixer`) | **Done** |
-| 6 | Quota-first budgeting by player count (`EconomyPlanner`, `LevelDefinition`, `LevelBuilder.Build(seed, players)`) | **Done** |
-| 7 | Counter and exit in the start wing (`CounterInStartRoom`, on by default) | **Partly done.** Loot is not yet weighted toward the far wing |
-| 8 | Apples: impact noise; flee ends in idle, then patrol | **Done** |
-| 9 | Doctor hit model, safe rooms, health regeneration | Not started |
-| 10 | Threat Director (hazard counting, no pile-ons) | Not started |
-| 11 | Hallucination rules | Not started (Phase 7) |
+| 1 | Commit accepted loot: `ExtractionZone` consumes valuables, `MedicineLedger.Commit` only ever adds | **Implemented** (logic tested, Unity pending) |
+| 2 | Latch the exit unlock (`ExitUnlocked`), plus `ExitZone` to finish the run | **Implemented** (logic tested, Unity pending) |
+| 3 | Dose gate: minimum pressure and cooldown, swell exception (`DoseGate`, `DoseRefused` event) | **Implemented** (logic tested, Unity pending) |
+| 4 | Defaults: baseline 0.25 per second, swell 5 seconds, event pressure from grabs and scares | **Implemented** (logic tested, Unity pending) |
+| 5 | Radio: battery (`BatteryModel`), 0.6 per second, strongest source only (`MusicReliefMixer`) | **Implemented** (logic tested, Unity pending) |
+| 6 | Quota-first budgeting by player count (`EconomyPlanner`, `LevelDefinition`, `LevelBuilder.Build(seed, players)`) | **Implemented** (logic tested, Unity pending) |
+| 7 | Counter and exit in the start wing (`CounterInStartRoom`, on by default) | **Integration incomplete.** Loot is not yet weighted toward the far wing, and the guaranteed-value rule is not implemented |
+| 8 | Apples: impact noise; flee ends in idle, then patrol | **Implemented** (logic tested, Unity pending) |
+| 9 | Doctor hit model, safe rooms, health regeneration | Not implemented |
+| 10 | Threat Director (hazard classes, counting, no pile-ons) | Not implemented |
+| 11 | Hallucination rules | Not implemented (Phase 7) |
+| 12 | Guaranteed-value placement and vault weighting in `LevelBuilder` | Not implemented |
+| 13 | Per-player dose tracking in the ledger and HUD | Not implemented |
+| 14 | Radio pauses while carried | Not implemented |
+| 15 | `PlayerBurst` must bypass the downed state (Phase 8) | Not implemented |
 
-The pure logic for items 1 to 6 and 8 is unit tested (159 tests, run outside Unity). The Unity-side scripts have not been compiled or played yet.
+The pure logic for items 1 to 6 and 8 is unit tested (159 tests, run outside Unity; 126 of them also in Unity). The Unity-side scripts have not been compiled or played yet. Code for items 7 and 9 to 15 is deliberately paused until Layer 1 runs in Unity.
 
 ## 9. Decisions and Open Questions
 

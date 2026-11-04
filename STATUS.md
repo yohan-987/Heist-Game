@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-11-03. Working title: TBD. Unity project on **6000.6.7f1** (Unity 6.6), URP, Windows.
+Last updated: 2026-11-04. Working title: TBD. Unity project on **6000.6.7f1** (Unity 6.6), URP, Windows.
 
 ## Summary
 
@@ -9,6 +9,8 @@ The code skeleton for Phases 0 to 4 and the hospital design is written. It compi
 ## Design review (2026-11-03)
 
 `docs/GAME_DESIGN.md` was revised to version 2 after two outside reviews and a check against the code. Main fixes: committed loot, quota-first budgeting by player count, slower pressure, a limited radio, fairness rules, a quota-unlocked exit. The economy changes (committed loot, exit latch, dose gate, 0.25 baseline, radio battery, quota-first budgeting, apple noise, exit zone) are now in code with tests. The doctor hit model, safe rooms, Threat Director and hallucination rules are not yet. See section 8 of the design.
+
+A second review (applied 2026-11-04, design version 2.1) changed the design further: vault weighting cut from 40 to 20 to 25 percent with a guaranteed-value rule for the nearest rooms, a radio that only plays when set down, a first delivery target of 3:00, a specified doctor hit model, hazard classes, and clearer exit and death rules. These are **docs only**. The matching code (items 12 to 15 in section 8 of the design) is paused until Layer 1 runs in Unity.
 
 ## Timeline
 
