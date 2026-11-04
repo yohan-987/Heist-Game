@@ -39,7 +39,7 @@ The repo holds the scripts, folder tree and assembly definitions. Unity's own se
    - **A genuine typo.** Fix it.
 3. Copy the full text of errors you cannot fix and send it to Claude. One round of this usually clears the lot.
 4. When the Console is clean, open Window > General > Test Runner. Pick the **EditMode** tab and click **Run All**.
-5. Expected result: **126 passed, 0 failed.** If any fail, send the test names and messages.
+5. Expected result: **198 passed, 0 failed** (126 were already confirmed in Unity; the rest cover the design v2.1 code). If any fail, send the test names and messages.
 
 Do not carry on until step 5 is green.
 
@@ -178,3 +178,11 @@ After the sandbox is solid:
 | Dose key does nothing | No run is active (add `SandboxRun`), or no dose is banked |
 | Enemy stands still | No NavMesh baked, or the enemy is not on the baked surface |
 | `Bootstrap` errors about a missing scene | Do not use it in the sandbox |
+
+## After pulling the design 2.1 code
+
+1. Select the Player and, on **Player Stats**, click the three dots then **Reset**, so it picks up the hit numbers (protection 2 s, safe-room regeneration 5 per second, knockback). Do the same on **Player Insanity** if you have not already.
+2. Open each `EnemyDefinition` asset and set **Attack Damage** to 60 and **Attack Windup** to 0.75. Saved assets keep their old numbers (25 and no wind-up).
+3. Safe rooms: on the start room (and the pharmacy room, once it is separate) add a **Box Collider** that covers the room, then add the **Safe Zone** component. Doctors will not notice, chase or attack anyone inside it, and the player regains 5 health per second there.
+4. The radio only plays while it is set down. Pick it up, press E to switch it on, put it on the floor.
+5. Level builder: valuable spawn points in the far third of the rooms form the vault. The console warns if the nearest rooms cannot hold enough value, or if a room set has too few spawn points near the start.

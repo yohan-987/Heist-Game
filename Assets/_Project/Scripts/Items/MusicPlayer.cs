@@ -22,7 +22,9 @@ namespace Game.Items
         [SerializeField] private bool _playing;
 
         private float _timer;
+        private bool _wasPaused;
         private BatteryModel _battery;
+        private Game.Interaction.IGrabbable _grabbable;
 
         public bool IsPlaying => _playing;
         public float Volume => _volume;
@@ -33,7 +35,12 @@ namespace Game.Items
         /// <summary>How far the music carries: both the calming range and the distance enemies hear it.</summary>
         public float Radius => _loudness * _volume;
 
+        private void Awake() => _grabbable = GetComponent<Game.Interaction.IGrabbable>();
+
         private void Start() => ApplyAudio();
+
+        /// <summary>A radio that is carried is paused: calm has to cost standing still (GAME_DESIGN 4.5).</summary>
+        public bool IsPaused => _grabbable != null && _grabbable.IsHeld;
 
         public void Use(int playerId) => Toggle();
 
@@ -58,6 +65,15 @@ namespace Game.Items
         {
             if (!_playing) return;
 
+            bool paused = IsPaused;
+            if (paused != _wasPaused)
+            {
+                _wasPaused = paused;
+                _timer = 0f;
+                ApplyAudio();
+            }
+            if (paused) return;
+
             float dt = Services.Clock.DeltaTime;
             Battery.Drain(dt);
             if (Battery.IsEmpty)
@@ -81,8 +97,9 @@ namespace Game.Items
         {
             if (_audio == null) return;
             _audio.volume = _volume;
-            if (_playing && !_audio.isPlaying) _audio.Play();
-            else if (!_playing && _audio.isPlaying) _audio.Stop();
+            bool shouldPlay = _playing && !IsPaused;
+            if (shouldPlay && !_audio.isPlaying) _audio.Play();
+            else if (!shouldPlay && _audio.isPlaying) _audio.Stop();
         }
     }
 }

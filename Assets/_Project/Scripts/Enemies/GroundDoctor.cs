@@ -68,7 +68,17 @@ namespace Game.Enemies
             if (noise.Source != NoiseSource.Music || _model.State != GrabberState.Dormant) return;
 
             float distance = Vector3.Distance(transform.position, noise.Position);
-            if (NoiseMath.Perceived(noise.Loudness, distance, _hearingSensitivity) > 0f) _model.Wake();
+            if (NoiseMath.Perceived(noise.Loudness, distance, _hearingSensitivity) <= 0f) return;
+
+            // Threat director: no waking while a doctor is on the player or close, and never toward a safe room.
+            var nearest = Services.Players.Nearest(transform.position, out float _);
+            if (nearest != null)
+            {
+                if (Services.SafeZones.IsSafe(nearest.Transform.position)) return;
+                if (Services.Threats.Check(nearest.PlayerId, HazardClass.HardControl, nearest.Transform.position) != HazardCheck.Allowed) return;
+            }
+
+            _model.Wake();
         }
 
         private void OnRepel(RepelBurst burst)
@@ -99,8 +109,19 @@ namespace Game.Enemies
             var target = Services.Players.Nearest(transform.position, out float distance);
             if (target == null) return;
 
+            // Ground doctors never follow anyone into a safe room.
+            if (Services.SafeZones.IsSafe(target.Transform.position))
+            {
+                _model.Break();
+                return;
+            }
+
             if (distance <= _grabDistance)
             {
+                // Hard-control hazard: it waits if the player already has two hazards or a doctor is close.
+                if (!Services.Threats.TryBegin(target.PlayerId, GetInstanceID(), HazardClass.HardControl,
+                        target.Transform.position, -1f)) return;
+
                 _victim = target;
                 _model.Grab();
                 return;
@@ -179,6 +200,8 @@ namespace Game.Enemies
             _agent.enabled = true;
             if (NavMesh.SamplePosition(transform.position, out var hit, 3f, NavMesh.AllAreas))
                 _agent.Warp(hit.position);
+
+            if (_victim != null) Services.Threats.End(_victim.PlayerId, GetInstanceID());
 
             if (_victim != null)
                 Services.Events.Publish(new PlayerReleasedByEnemy(_victim.PlayerId, Services.Spawner.EnsureIdentity(gameObject)));

@@ -78,7 +78,7 @@ namespace Game.Economy
         {
             if (!_active) return;
 
-            if (_medicine.TryConsume())
+            if (_medicine.TryConsume(evt.PlayerId))
             {
                 Services.Events.Publish(new DoseGranted(evt.PlayerId));
                 Publish();

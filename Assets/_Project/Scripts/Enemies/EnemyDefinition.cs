@@ -35,7 +35,10 @@ namespace Game.Enemies
 
         [Header("Attack")]
         [Min(0.1f)] public float AttackRange = 1.6f;
-        [Min(0f)] public float AttackDamage = 25f;
+        [Tooltip("A hit takes 60 of 100 health: one mistake is a scare, two are death.")]
+        [Min(0f)] public float AttackDamage = 60f;
+        [Tooltip("Seconds the attack winds up before it lands. Never less than 0.75 (HitModel.MinWindupSeconds).")]
+        [Min(0f)] public float AttackWindup = 0.75f;
         [Min(0.1f)] public float AttackCooldown = 1.4f;
 
         [Header("Level generation")]

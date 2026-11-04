@@ -44,10 +44,25 @@ namespace Game.Core
 
         public bool HasFired(int scareId) => _used.Contains(scareId);
 
+        /// <summary>How many scripted scares have fired this run.</summary>
+        public int ScriptedFired => _used.Count;
+
         /// <summary>A scripted scare was triggered (player walked into it). Allowed once per run, and only after the gap.</summary>
         public bool TryTriggerScripted(int scareId)
         {
+            bool costsPressure;
+            return TryTriggerScripted(scareId, out costsPressure);
+        }
+
+        /// <summary>
+        /// Same, and says whether this scare costs Pressure. The first scripted scare of a run is the
+        /// introduction and is purely cosmetic (GAME_DESIGN 4.8); every later one costs Pressure.
+        /// </summary>
+        public bool TryTriggerScripted(int scareId, out bool costsPressure)
+        {
+            costsPressure = false;
             if (_used.Contains(scareId) || !GapElapsed) return false;
+            costsPressure = _used.Count > 0;
             _used.Add(scareId);
             TimeSinceLast = 0f;
             return true;

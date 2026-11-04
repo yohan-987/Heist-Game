@@ -10,7 +10,7 @@ The code skeleton for Phases 0 to 4 and the hospital design is written. It compi
 
 `docs/GAME_DESIGN.md` was revised to version 2 after two outside reviews and a check against the code. Main fixes: committed loot, quota-first budgeting by player count, slower pressure, a limited radio, fairness rules, a quota-unlocked exit. The economy changes (committed loot, exit latch, dose gate, 0.25 baseline, radio battery, quota-first budgeting, apple noise, exit zone) are now in code with tests. The doctor hit model, safe rooms, Threat Director and hallucination rules are not yet. See section 8 of the design.
 
-A second review (applied 2026-11-04, design version 2.1) changed the design further: vault weighting cut from 40 to 20 percent on normal and 25 on high with a guaranteed-value rule for the nearest rooms, a radio that only plays when set down, a first delivery target of 3:00, a specified doctor hit model, hazard classes, and clearer exit and death rules. These are **docs only**. The matching code (items 12 to 15 in section 8 of the design) is paused until Layer 1 runs in Unity.
+A second review (applied 2026-11-04, design version 2.1) changed the design further: vault weighting cut from 40 to 20 percent on normal and 25 on high with a guaranteed-value rule for the nearest rooms, a radio that only plays when set down, a first delivery target of 3:00, a specified doctor hit model, hazard classes, and clearer exit and death rules. The matching code was then written (items 7 to 10, 12 to 16 in section 8 of the design): hit model and safe rooms, threat director, guaranteed-value loot placement, per-player dose tracking, radio paused while carried, cosmetic introductory scare. It passes the 198 tests outside Unity and has **not been compiled or played in Unity yet**.
 
 ## Timeline
 
@@ -22,12 +22,13 @@ A second review (applied 2026-11-04, design version 2.1) changed the design furt
 | 2026-10-31 | Chose the theme: a haunted mental hospital. Wrote `docs/GAME_DESIGN.md` |
 | 2026-10-31 | Implemented the design in code: insanity and dosing, medicine economy, radio, apples, flee state, ground doctor, spider nest, jumpscares, spider overlay. 126 tests |
 | 2026-11-03 | First time in the Unity editor. Fixed two compile errors. All 126 tests pass in Unity. Layers created, Sandbox scene started, player walking |
+| 2026-11-05 | Wrote design 2.1 in code (hit model, safe rooms, threat director, loot placement, per-player doses, radio pause, cosmetic intro scare). 198 tests outside Unity; the 72 newer ones are untested in Unity |
 
 ## Code written
 
 All under `Assets/_Project/Scripts/`. See `docs/CODE_STATUS.md` for the per-assembly list.
 
-- Core: event bus, services, seeded random numbers, state machines, noise, speed modifiers, difficulty profile, compounder, jumpscare scheduler
+- Core: event bus, services, seeded random numbers, state machines, noise, speed modifiers, difficulty profile, compounder, jumpscare scheduler, hit model, threat director, safe zones
 - Player: movement, look, input, stamina, health, insanity
 - Interaction: physics grab, carry, throw
 - Items: valuables with impact damage, extraction zone (the medicine counter), apples with rot, radio
@@ -42,8 +43,8 @@ All under `Assets/_Project/Scripts/`. See `docs/CODE_STATUS.md` for the per-asse
 
 | Check | Result |
 |---|---|
-| 159 EditMode tests, run outside Unity (Mono, stand-ins for Unity types), after the design v2 code changes | All pass |
-| 126 EditMode tests, Unity Test Runner (6000.6.7f1), 2026-11-03 | **All pass.** The 33 newer tests have not been run in Unity yet |
+| 198 EditMode tests, run outside Unity (Mono, stand-ins for Unity types), after the design 2.1 code changes | All pass |
+| 126 EditMode tests, Unity Test Runner (6000.6.7f1), 2026-11-03 | **All pass.** The 72 newer tests have not been run in Unity yet |
 | Console warnings during the run | 2, both expected: the save tests deliberately write a corrupt file |
 | MonoBehaviour code at runtime | Only player walking and looking confirmed so far |
 

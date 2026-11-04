@@ -87,8 +87,8 @@ namespace Game.Player
             {
                 _burstHandled = true;
                 Services.Events.Publish(new PlayerBurst(_stats.PlayerId));
-                // Killing through the normal damage path keeps death handling in one place.
-                _stats.ApplyDamage(new DamageInfo(_stats.Health.Current, transform.position, Vector3.zero, this));
+                // The burst kills outright: it skips hit protection and will skip the downed state in co-op.
+                _stats.Kill();
             }
         }
 
@@ -132,7 +132,8 @@ namespace Game.Player
         private void OnScare(Jumpscare evt)
         {
             // Scares are shown to the local player only, so only the local player pays for them.
-            if (evt.Kind != ScareKind.Scripted || !_stats.IsLocal) return;
+            // The introductory scare is cosmetic and adds nothing (GAME_DESIGN 4.8).
+            if (evt.Kind != ScareKind.Scripted || !evt.CostsPressure || !_stats.IsLocal) return;
             AddPressure(_pressureOnScare);
         }
 

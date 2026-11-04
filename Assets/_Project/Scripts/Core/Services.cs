@@ -16,6 +16,8 @@ namespace Game.Core
         private static EntityIdProvider _ids;
         private static Spawner _spawner;
         private static DifficultyProfile _difficulty;
+        private static ThreatDirector _threats;
+        private static SafeZoneRegistry _safeZones;
 
         /// <summary>Current difficulty numbers. Assign a new profile from the menu or level setup.</summary>
         public static DifficultyProfile Difficulty
@@ -30,6 +32,8 @@ namespace Game.Core
         public static GameStateMachine State => _state ??= new GameStateMachine(Events);
         public static EntityIdProvider Ids => _ids ??= new EntityIdProvider();
         public static Spawner Spawner => _spawner ??= new Spawner(Ids);
+        public static ThreatDirector Threats => _threats ??= new ThreatDirector();
+        public static SafeZoneRegistry SafeZones => _safeZones ??= new SafeZoneRegistry();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         public static void Reset()
@@ -42,6 +46,8 @@ namespace Game.Core
             _ids = null;
             _spawner = null;
             _difficulty = null;
+            _threats = null;
+            _safeZones = null;
         }
     }
 }

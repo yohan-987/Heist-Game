@@ -14,6 +14,10 @@ namespace Game.Enemies
         [SerializeField, Min(1)] private int _hallucinationKinds = 4;
         [SerializeField, Min(0f)] private float _minGapSeconds = 45f;
 
+        // Hazard ids for scares sit in their own range so they never collide with enemy ids.
+        private const int ScareHazardBase = 1000000;
+        private const float ScareHazardSeconds = 4f;
+
         private JumpscareScheduler _scheduler;
         private float _localInsanity;
 
@@ -37,6 +41,8 @@ namespace Game.Enemies
 
         private void Update()
         {
+            Services.Threats.Tick(Services.Clock.DeltaTime);
+
             if (_scheduler.TryHallucination(Services.Clock.DeltaTime, _localInsanity, out int id))
                 Services.Events.Publish(new Jumpscare(id, ScareKind.Hallucination));
         }
@@ -44,8 +50,22 @@ namespace Game.Enemies
         /// <summary>A scripted scare was reached. Returns true if it fired.</summary>
         public bool TriggerScripted(int scareId)
         {
-            if (!_scheduler.TryTriggerScripted(scareId)) return false;
-            Services.Events.Publish(new Jumpscare(scareId, ScareKind.Scripted));
+            var local = Services.Players.Local;
+            if (local != null)
+            {
+                // A scripted scare is a disruptive hazard: it waits while a doctor is on the player (GAME_DESIGN 4.9).
+                var check = Services.Threats.Check(local.PlayerId, HazardClass.Disruptive, local.Transform.position);
+                if (check != HazardCheck.Allowed) return false;
+            }
+
+            bool costsPressure;
+            if (!_scheduler.TryTriggerScripted(scareId, out costsPressure)) return false;
+
+            if (local != null)
+                Services.Threats.TryBegin(local.PlayerId, ScareHazardBase + scareId, HazardClass.Disruptive,
+                    local.Transform.position, ScareHazardSeconds);
+
+            Services.Events.Publish(new Jumpscare(scareId, ScareKind.Scripted, costsPressure));
             return true;
         }
 

@@ -47,6 +47,7 @@ namespace Game.Player
         private Vector3 _horizontalVelocity;
         private float _verticalVelocity;
         private float _strideAccumulator;
+        private Vector3 _knockback;
         private bool _crouching;
 
         /// <summary>Outside slowdowns (an enemy holding the player, etc.). Carry slowdown is separate.</summary>
@@ -55,7 +56,16 @@ namespace Game.Player
         public bool IsGrounded => _controller != null && _controller.isGrounded;
         public bool IsSprinting { get; private set; }
         public bool IsCrouching => _crouching;
-        public Vector3 Velocity => _horizontalVelocity + Vector3.up * _verticalVelocity;
+        public Vector3 Velocity => _horizontalVelocity + _knockback + Vector3.up * _verticalVelocity;
+
+        private const float KnockbackDecay = 18f;
+
+        /// <summary>A short shove, for example from a doctor's hit. Fades out by itself.</summary>
+        public void Knockback(Vector3 velocity)
+        {
+            velocity.y = 0f;
+            _knockback = velocity;
+        }
 
         private void Awake()
         {
@@ -83,7 +93,8 @@ namespace Game.Player
             UpdateHorizontal(wish, dt);
             UpdateVertical(input, dt);
 
-            var motion = (_horizontalVelocity + Vector3.up * _verticalVelocity) * dt;
+            _knockback = Vector3.MoveTowards(_knockback, Vector3.zero, KnockbackDecay * dt);
+            var motion = (_horizontalVelocity + _knockback + Vector3.up * _verticalVelocity) * dt;
             _controller.Move(motion);
             if (_controller.isGrounded && _verticalVelocity < 0f) _verticalVelocity = -2f; // keep grounded
 

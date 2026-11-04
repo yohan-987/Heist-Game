@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Game.Core;
 
 namespace Game.Economy
@@ -17,6 +18,26 @@ namespace Game.Economy
         public float CommittedValue { get; private set; }
 
         public int Consumed { get; private set; }
+
+        /// <summary>Used by <see cref="TryConsume()"/> when the caller does not say who took the dose.</summary>
+        public const int UnknownPlayer = -1;
+
+        private readonly Dictionary<int, int> _takenBy = new Dictionary<int, int>();
+
+        /// <summary>Doses this player has taken. Shown on the HUD and the results screen so a drained pool is visible.</summary>
+        public int TakenBy(int playerId)
+        {
+            int n;
+            return _takenBy.TryGetValue(playerId, out n) ? n : 0;
+        }
+
+        /// <summary>Ids of every player who has taken at least one dose, in ascending order.</summary>
+        public List<int> Takers()
+        {
+            var ids = new List<int>(_takenBy.Keys);
+            ids.Sort();
+            return ids;
+        }
 
         /// <summary>Whole doses produced from everything committed.</summary>
         public int Produced => Compounder.DosesFor(CommittedValue, ValuePerDose);
@@ -50,6 +71,7 @@ namespace Game.Economy
             ValuePerDose = Math.Max(1f, valuePerDose);
             CommittedValue = 0f;
             Consumed = 0;
+            _takenBy.Clear();
             ExitUnlocked = false;
         }
 
@@ -64,10 +86,16 @@ namespace Game.Economy
         }
 
         /// <summary>Take one dose out of the pool. Returns false if none are available.</summary>
-        public bool TryConsume()
+        public bool TryConsume() => TryConsume(UnknownPlayer);
+
+        /// <summary>Take one dose out of the pool for this player and remember who took it.</summary>
+        public bool TryConsume(int playerId)
         {
             if (Banked <= 0) return false;
             Consumed++;
+            int n;
+            _takenBy.TryGetValue(playerId, out n);
+            _takenBy[playerId] = n + 1;
             return true;
         }
     }

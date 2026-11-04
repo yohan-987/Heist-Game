@@ -304,18 +304,18 @@ Already in code (Unity-side parts still partly untested, see `STATUS.md` and `CO
 | 4 | Defaults: baseline 0.25 per second, swell 5 seconds, event pressure from grabs and scares | **Implemented** (logic tested, Unity pending) |
 | 5 | Radio: battery (`BatteryModel`), 0.6 per second, strongest source only (`MusicReliefMixer`) | **Implemented** (logic tested, Unity pending) |
 | 6 | Quota-first budgeting by player count (`EconomyPlanner`, `LevelDefinition`, `LevelBuilder.Build(seed, players)`) | **Implemented** (logic tested, Unity pending) |
-| 7 | Counter and exit in the start wing (`CounterInStartRoom`, on by default) | **Integration incomplete.** Loot is not yet weighted toward the far wing, and the guaranteed-value rule is not implemented |
+| 7 | Counter and exit in the start wing (`CounterInStartRoom`, on by default), with the guaranteed-value rule from row 12 | **Implemented** (logic tested, Unity pending) |
 | 8 | Apples: impact noise; flee ends in idle, then patrol | **Implemented** (logic tested, Unity pending) |
-| 9 | Doctor hit model, safe rooms, health regeneration | Not implemented |
-| 10 | Threat Director (hazard classes, counting, no pile-ons) | Not implemented |
+| 9 | Doctor hit model, safe rooms, health regeneration (`HitModel`, `SafeZone`, `PlayerStats`, `EnemyBrain`). Safe zones are placed by hand on the start and pharmacy wing prefabs | **Implemented** (logic tested, Unity pending) |
+| 10 | Threat Director (`ThreatDirector`): hazard classes, two-hazard cap, no pile-ons. Doctors, ground doctors, spider nests and scripted scares go through it | **Implemented** (logic tested, Unity pending) |
 | 11 | Hallucination rules | Not implemented (Phase 7) |
-| 12 | Guaranteed-value placement and vault weighting in `LevelBuilder` | Not implemented |
-| 13 | Per-player dose tracking in the ledger and HUD | Not implemented |
-| 14 | Radio pauses while carried | Not implemented |
-| 15 | `PlayerBurst` must bypass the downed state (Phase 8) | Not implemented |
-| 16 | The first scripted scare adds no Pressure (`PlayerInsanity.OnScare` currently adds +5 to every local scare) | Not implemented |
+| 12 | Guaranteed-value placement and vault weighting (`LootPlacement`, used by `LevelBuilder`; vault 20 percent normal, 25 percent high) | **Implemented** (logic tested, Unity pending) |
+| 13 | Per-player dose tracking (`MedicineLedger.TakenBy`) | **Integration incomplete.** The ledger and run tracker record it; there is no HUD or results screen yet |
+| 14 | Radio pauses while carried (`MusicPlayer.IsPaused`) | **Implemented** (logic tested, Unity pending) |
+| 15 | The Pressure burst bypasses protection (`PlayerStats.Kill`) | **Partly implemented.** The downed state itself is Phase 8 and must also be skipped there |
+| 16 | The first scripted scare adds no Pressure (`JumpscareScheduler`, `Jumpscare.CostsPressure`) | **Implemented** (logic tested, Unity pending) |
 
-The pure logic for items 1 to 6 and 8 is unit tested (159 tests, run outside Unity; 126 of them also in Unity). The Unity-side scripts have not been compiled or played yet. Code for items 7 and 9 to 15 is deliberately paused until Layer 1 runs in Unity.
+The pure logic for items 1 to 6, 8, 10, 12, 14 and 16, and the maths behind 7, 9 and 13, is unit tested (198 tests, run outside Unity; 126 of them also in Unity). The Unity-side scripts have not been compiled or played yet. Only the hallucination rules (item 11, Phase 7) are not started.
 
 ## 9. Decisions and Open Questions
 

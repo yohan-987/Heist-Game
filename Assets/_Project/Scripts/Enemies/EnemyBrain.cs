@@ -48,6 +48,8 @@ namespace Game.Enemies
         private Vector3 _lastKnownTargetPosition;
         private Vector3 _fleeFrom;
         private float _fleeTimer;
+        private bool _hazardActive;
+        private int _hazardPlayerId;
 
         public EnemyState State => _fsm.Current;
         public EnemyDefinition Definition => _definition;
@@ -59,13 +61,13 @@ namespace Game.Enemies
             _home = transform.position;
 
             _fsm
-                .Add(EnemyState.Idle, onEnter: _ => { _agent.ResetPath(); }, onUpdate: UpdateIdle)
-                .Add(EnemyState.Patrol, onEnter: _ => BeginPatrol(), onUpdate: UpdatePatrol)
-                .Add(EnemyState.Investigate, onEnter: _ => BeginInvestigate(), onUpdate: UpdateInvestigate)
+                .Add(EnemyState.Idle, onEnter: _ => { ReleaseHazard(); _agent.ResetPath(); }, onUpdate: UpdateIdle)
+                .Add(EnemyState.Patrol, onEnter: _ => { ReleaseHazard(); BeginPatrol(); }, onUpdate: UpdatePatrol)
+                .Add(EnemyState.Investigate, onEnter: _ => { ReleaseHazard(); BeginInvestigate(); }, onUpdate: UpdateInvestigate)
                 .Add(EnemyState.Chase, onEnter: _ => BeginChase(), onUpdate: UpdateChase)
                 .Add(EnemyState.Attack, onEnter: _ => { _agent.ResetPath(); _attackTimer = 0f; }, onUpdate: UpdateAttack)
                 .Add(EnemyState.Cooldown, onEnter: _ => _agent.ResetPath(), onUpdate: UpdateCooldown)
-                .Add(EnemyState.Flee, onEnter: _ => BeginFlee(), onUpdate: UpdateFlee);
+                .Add(EnemyState.Flee, onEnter: _ => { ReleaseHazard(); BeginFlee(); }, onUpdate: UpdateFlee);
         }
 
         private void Start()
@@ -89,6 +91,27 @@ namespace Game.Enemies
         {
             Services.Events.Unsubscribe<NoiseEmitted>(HandleNoiseEvent);
             Services.Events.Unsubscribe<RepelBurst>(OnRepel);
+            ReleaseHazard();
+            Services.Threats.RemoveDoctor(GetInstanceID());
+        }
+
+        // ---------- Threat director (GAME_DESIGN 4.9) ----------
+
+        /// <summary>A chasing doctor is a lethal hazard on that player. It always registers; other hazards wait.</summary>
+        private void RegisterHazard()
+        {
+            ReleaseHazard();
+            if (_target == null) return;
+            _hazardPlayerId = _target.PlayerId;
+            Services.Threats.TryBegin(_hazardPlayerId, GetInstanceID(), HazardClass.Lethal, _target.Transform.position, -1f);
+            _hazardActive = true;
+        }
+
+        private void ReleaseHazard()
+        {
+            if (!_hazardActive) return;
+            Services.Threats.End(_hazardPlayerId, GetInstanceID());
+            _hazardActive = false;
         }
 
         private void Update()
@@ -117,6 +140,9 @@ namespace Game.Enemies
             var s = _fsm.Current;
             if (s == EnemyState.Chase || s == EnemyState.Attack || s == EnemyState.Cooldown || s == EnemyState.Flee) return;
 
+            // Noise made inside a safe room never draws a doctor in.
+            if (Services.SafeZones.IsSafe(noise.Position)) return;
+
             // Some noise types (music) are ignored by doctors entirely.
             float sensitivity = _definition.HearingSensitivity * _definition.Hearing.Get(noise.Source);
             if (sensitivity <= 0f) return;
@@ -132,6 +158,8 @@ namespace Game.Enemies
 
         private void Sense()
         {
+            Services.Threats.SetDoctor(GetInstanceID(), transform.position);
+
             var s = _fsm.Current;
             var seen = FindVisiblePlayer();
 
@@ -156,6 +184,8 @@ namespace Game.Enemies
             {
                 var p = players[i];
                 if (!p.IsAlive) continue;
+                // Doctors never notice anyone inside a safe room.
+                if (Services.SafeZones.IsSafe(p.Transform.position)) continue;
 
                 Vector3 eye = _eyes.position;
                 Vector3 target = p.Head.position;
@@ -206,7 +236,7 @@ namespace Game.Enemies
 
             Vector2 offset = Random.insideUnitCircle * _wanderRadius;
             Vector3 candidate = _home + new Vector3(offset.x, 0f, offset.y);
-            if (NavMesh.SamplePosition(candidate, out var hit, 4f, NavMesh.AllAreas))
+            if (!Services.SafeZones.IsSafe(candidate) && NavMesh.SamplePosition(candidate, out var hit, 4f, NavMesh.AllAreas))
             {
                 point = hit.position;
                 return true;
@@ -240,11 +270,19 @@ namespace Game.Enemies
             _agent.speed = _definition.ChaseSpeed;
             _agent.isStopped = false;
             _repathTimer = 0f;
+            RegisterHazard();
         }
 
         private void UpdateChase(float dt)
         {
             if (_target == null || !_target.IsAlive)
+            {
+                _fsm.TransitionTo(EnemyState.Idle);
+                return;
+            }
+
+            // The target reached a safe room: give up and never follow.
+            if (Services.SafeZones.IsSafe(_target.Transform.position))
             {
                 _fsm.TransitionTo(EnemyState.Idle);
                 return;
@@ -269,7 +307,7 @@ namespace Game.Enemies
             if (_timeSinceSeen >= _definition.LoseSightTime)
             {
                 _investigatePoint = _lastKnownTargetPosition;
-                _fsm.TransitionTo(EnemyState.Investigate);
+                _fsm.TransitionTo(Services.SafeZones.IsSafe(_investigatePoint) ? EnemyState.Idle : EnemyState.Investigate);
             }
         }
 
@@ -288,9 +326,10 @@ namespace Game.Enemies
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(flat), 10f * dt);
 
             _attackTimer += dt;
-            if (_attackTimer < 0.35f) return; // short wind-up so players can react
+            if (_attackTimer < HitModel.Windup(_definition.AttackWindup)) return; // readable wind-up, at least 0.75 s
 
-            if (Vector3.Distance(transform.position, _target.Transform.position) <= _definition.AttackRange * 1.25f)
+            bool targetSafe = Services.SafeZones.IsSafe(_target.Transform.position);
+            if (!targetSafe && Vector3.Distance(transform.position, _target.Transform.position) <= _definition.AttackRange * 1.25f)
             {
                 var damageable = _target.Transform.GetComponentInParent<IDamageable>();
                 damageable?.ApplyDamage(new DamageInfo(_definition.AttackDamage, _target.Transform.position,

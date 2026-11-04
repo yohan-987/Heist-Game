@@ -165,10 +165,12 @@ namespace Game.Core
     {
         public readonly int ScareId;
         public readonly ScareKind Kind;
+        /// <summary>False for the introductory scare, which adds no Pressure.</summary>
+        public readonly bool CostsPressure;
 
-        public Jumpscare(int scareId, ScareKind kind)
+        public Jumpscare(int scareId, ScareKind kind, bool costsPressure = true)
         {
-            ScareId = scareId; Kind = kind;
+            ScareId = scareId; Kind = kind; CostsPressure = costsPressure;
         }
     }
 

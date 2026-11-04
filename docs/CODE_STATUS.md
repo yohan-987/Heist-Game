@@ -6,12 +6,12 @@ Last updated: 2026-10-31. Written without the Unity editor, so everything below 
 
 | Assembly | Contents |
 |---|---|
-| `Core` | `EventBus`, game events, `GameEntityId`, `DeterministicRandom`, `StateMachine`, `GameStateMachine`, `GameClock`, `PlayerRegistry`, `Services`, `Spawner`, `Bootstrap`, noise maths and `NoiseEmitter`, layer names, input state struct, `SpeedModifiers`, `DifficultyProfile`, `Compounder`, `EconomyPlanner`, `JumpscareScheduler` |
+| `Core` | `EventBus`, game events, `GameEntityId`, `DeterministicRandom`, `StateMachine`, `GameStateMachine`, `GameClock`, `PlayerRegistry`, `Services`, `Spawner`, `Bootstrap`, noise maths and `NoiseEmitter`, layer names, input state struct, `SpeedModifiers`, `DifficultyProfile`, `Compounder`, `EconomyPlanner`, `JumpscareScheduler`, `HitModel`, `ThreatDirector`, `SafeZoneRegistry`, `SafeZone` |
 | `Player` | `StaminaModel`, `HealthModel`, `PlayerStats`, `InsanityModel`, `DoseGate`, `MusicReliefMixer`, `PlayerInsanity`, `PlayerInputReader` (Input System), `PlayerLook`, `PlayerMotor` |
 | `Interaction` | `GrabMath`, `Grabbable`, `PlayerGrabber` |
 | `Items` | `ValuableDefinition`, `ValueLoss`, `Valuable`, `ExtractionZone`, `RotModel`, `BatteryModel`, `Apple`, `MusicPlayer` |
 | `Enemies` | `EnemyDefinition`, `EnemySenses`, `SourceHearing`, `EnemyBrain` (NavMesh, state machine, Flee), `DormantGrabberModel`, `GroundDoctor`, `SpiderNest`, `JumpscareDirector`, `ScareTrigger` |
-| `LevelGen` | `LayoutPlanner` (seeded, deterministic), `SpawnPlanner`, `RoomAuthoring`, `LevelDefinition`, `LevelBuilder` |
+| `LevelGen` | `LayoutPlanner` (seeded, deterministic), `SpawnPlanner`, `LootPlacement`, `RoomAuthoring`, `LevelDefinition`, `LevelBuilder` |
 | `Economy` | `RunLedger`, `QuotaMath`, `MedicineLedger`, `RunTracker`, `ExitZone`, `UpgradeDefinition`, `PlayerProfile`, `UpgradeShop` |
 | `UI` | `CrawlerSwarmModel`, `CrawlerOverlay` |
 | `Save` | `SaveService` (atomic write, backup, corrupt-file fallback) |
@@ -19,7 +19,7 @@ Last updated: 2026-10-31. Written without the Unity editor, so everything below 
 
 ## Verified
 
-159 EditMode tests in `Assets/_Project/Tests/EditMode/` were compiled and run outside Unity against small stand-ins for the Unity types they touch. All pass. 126 of them also passed in the Unity Test Runner on 6000.6.7f1 (2026-11-03); the 33 added by the design v2 code changes have not been run in Unity yet. They cover the event bus, seeded RNG, state machines, noise maths, stamina and health, grab maths, value loss, run ledger and quotas, upgrade shop, enemy senses, layout planning (200 seeds: connected, no overlaps, deterministic, exit room is farthest), spawn budgeting, the command parser and the save round trip. The hospital design and its v2 revision add tests for insanity and swelling, dose maths, the medicine ledger, speed modifiers, difficulty, apple rot, per-source hearing, flee maths, the ground doctor state machine, the spider swarm cap, the jumpscare scheduler, committed loot and the exit latch, the dose gate, music mixing (strongest source only), the radio battery and the economy planner at 1 to 4 players.
+198 EditMode tests in `Assets/_Project/Tests/EditMode/` were compiled and run outside Unity against small stand-ins for the Unity types they touch. All pass. 126 of them also passed in the Unity Test Runner on 6000.6.7f1 (2026-11-03); the 72 added since (design v2 and v2.1 code) have not been run in Unity yet. They cover the event bus, seeded RNG, state machines, noise maths, stamina and health, grab maths, value loss, run ledger and quotas, upgrade shop, enemy senses, layout planning (200 seeds: connected, no overlaps, deterministic, exit room is farthest), spawn budgeting, the command parser and the save round trip. The hospital design and its revisions add tests for insanity and swelling, dose maths, the medicine ledger (including doses per player), speed modifiers, difficulty, apple rot, per-source hearing, flee maths, the ground doctor state machine, the spider swarm cap, the jumpscare scheduler (including the cosmetic introductory scare), committed loot and the exit latch, the dose gate, music mixing, the radio battery, the economy planner at 1 to 4 players, the hit model, safe zones, the threat director and loot placement (vault share and the guaranteed-value rule across 100 seeds, normal and high, 1 to 4 players).
 
 ## Not verified
 
@@ -44,7 +44,7 @@ The full click-by-click version is in `docs/UNITY_SETUP.md`. Summary:
 
 ## Known gaps
 
-- Design v2 items still open: doctor hit model, safe rooms, Threat Director, hallucination rules, and weighting loot toward the far wing (see `docs/GAME_DESIGN.md` section 8).
+- Design v2.1 items still open: hallucination rules (Phase 7) and a HUD or results screen for doses per player. Everything else in `docs/GAME_DESIGN.md` section 8 is written but unproven in Unity.
 - A `PlayerInsanity` already placed in a scene keeps its old saved numbers; use Reset on the component after pulling the v2 changes.
 - Defibrillator, downed state, friendly fire and pulling a teammate free are deferred to Phase 8 (co-op).
 - No prefabs yet for the radio, apples, ground doctor, spider nest or the medicine counter (an `ExtractionZone`).

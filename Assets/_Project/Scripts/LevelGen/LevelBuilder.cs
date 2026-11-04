@@ -28,11 +28,17 @@ namespace Game.LevelGen
         public readonly float Budget;
         /// <summary>Least value that could ever win this level. Spawned value below this means the level cannot be won.</summary>
         public readonly float MinimumWinnableValue;
+        /// <summary>Value placed in the nearest two thirds of the rooms. At least 1.2 times the minimum when <see cref="GuaranteeMet"/>.</summary>
+        public readonly float NearValue;
+        /// <summary>Value placed in the vault wing (farthest third of the rooms).</summary>
+        public readonly float VaultValue;
+        public readonly bool GuaranteeMet;
 
         public LevelBuildResult(LevelLayout layout, float spawnedValue, Transform playerSpawn,
             int valuables, int enemies, int nuisances, int quotaDoses, float valuePerDose,
-            float budget, float minimumWinnableValue)
+            float budget, float minimumWinnableValue, float nearValue = 0f, float vaultValue = 0f, bool guaranteeMet = true)
         {
+            NearValue = nearValue; VaultValue = vaultValue; GuaranteeMet = guaranteeMet;
             Layout = layout; SpawnedValue = spawnedValue; PlayerSpawn = playerSpawn;
             ValuableCount = valuables; EnemyCount = enemies; NuisanceCount = nuisances;
             QuotaDoses = quotaDoses; ValuePerDose = valuePerDose;
@@ -101,8 +107,13 @@ namespace Game.LevelGen
             var enemyRng = new DeterministicRandom(seed ^ 0x5EED2);
             var nuisanceRng = new DeterministicRandom(seed ^ 0x5EED3);
 
-            float spawnedValue = 0f;
-            int valuableCount = PopulateValuables(layout, instances, valuableRng, budget, ref spawnedValue);
+            // Manual budgets have no formula, so treat the budget as what a team at the expected efficiency can win.
+            float minimum = _definition.UseManualBudget ? budget * Services.Difficulty.CollectionEfficiency : plan.MinimumValue;
+
+            float spawnedValue = 0f, nearValue = 0f, vaultValue = 0f;
+            bool guaranteeMet = true;
+            int valuableCount = PopulateValuables(layout, instances, valuableRng, budget, minimum,
+                ref spawnedValue, ref nearValue, ref vaultValue, ref guaranteeMet);
             int enemyCount = PopulateEnemies(layout, instances, enemyRng);
             int nuisanceCount = PopulateNuisances(layout, instances, nuisanceRng);
 
@@ -116,7 +127,8 @@ namespace Game.LevelGen
 
             var spawn = instances[layout.StartRoomIndex].PlayerSpawn;
             var result = new LevelBuildResult(layout, spawnedValue, spawn, valuableCount, enemyCount,
-                nuisanceCount, plan.QuotaDoses, _definition.ValuePerDose, budget, plan.MinimumValue);
+                nuisanceCount, plan.QuotaDoses, _definition.ValuePerDose, budget, plan.MinimumValue,
+                nearValue, vaultValue, guaranteeMet);
             Last = result;
             return result;
         }
@@ -168,32 +180,70 @@ namespace Game.LevelGen
             }
         }
 
-        private int PopulateValuables(LevelLayout layout, List<RoomAuthoring> rooms, DeterministicRandom rng, float budget, ref float totalValue)
+        private int PopulateValuables(LevelLayout layout, List<RoomAuthoring> rooms, DeterministicRandom rng,
+            float budget, float minimumValue, ref float totalValue, ref float nearValue, ref float vaultValue,
+            ref bool guaranteeMet)
         {
             var pool = _definition.ValuablePool;
             if (pool == null || pool.Length == 0) return 0;
 
-            var points = CollectPoints(layout, rooms, r => r.ValuableSpawns);
-            if (points.Count == 0) return 0;
-            rng.Shuffle(points);
+            // Near rooms (nearest two thirds) and the vault wing (farthest third) get their own point lists.
+            var distances = new List<int>(layout.Rooms.Count);
+            for (int i = 0; i < layout.Rooms.Count; i++) distances.Add(layout.Rooms[i].DistanceFromStart);
+            bool[] isVault = LootPlacement.ClassifyVault(distances, layout.StartRoomIndex);
+
+            var nearPoints = new List<Transform>();
+            var vaultPoints = new List<Transform>();
+            for (int i = 0; i < rooms.Count; i++)
+            {
+                if (i == layout.StartRoomIndex) continue;
+                var target = isVault[i] ? vaultPoints : nearPoints;
+                foreach (var t in rooms[i].ValuableSpawns)
+                    if (t != null) target.Add(t);
+            }
+            if (nearPoints.Count + vaultPoints.Count == 0) return 0;
+            rng.Shuffle(nearPoints);
+            rng.Shuffle(vaultPoints);
 
             var options = new List<SpawnOption>(pool.Length);
             for (int i = 0; i < pool.Length; i++)
                 if (pool[i] != null && pool[i].Prefab != null)
                     options.Add(new SpawnOption(i, pool[i].BaseValue, pool[i].SpawnWeight));
 
-            var picks = SpawnPlanner.Choose(rng, options, budget, points.Count);
+            var picks = SpawnPlanner.Choose(rng, options, budget, nearPoints.Count + vaultPoints.Count);
 
+            var values = new List<float>(picks.Count);
+            foreach (int pick in picks) values.Add(pool[pick].BaseValue);
+
+            var placement = LootPlacement.Assign(values, nearPoints.Count, vaultPoints.Count,
+                Services.Difficulty.VaultShare, minimumValue);
+
+            int placed = 0;
             for (int n = 0; n < picks.Count; n++)
             {
+                int slot = placement.SlotForItem[n];
+                if (slot < 0) continue;
+
                 var def = pool[picks[n]];
-                var point = points[n];
+                var point = slot < nearPoints.Count ? nearPoints[slot] : vaultPoints[slot - nearPoints.Count];
                 var go = Services.Spawner.Spawn(def.Prefab, point.position, point.rotation, _root);
                 var valuable = go.GetComponent<Valuable>();
                 if (valuable != null) valuable.Initialise(def);
                 totalValue += def.BaseValue;
+                placed++;
             }
-            return picks.Count;
+
+            nearValue = placement.NearValue;
+            vaultValue = placement.VaultValue;
+            guaranteeMet = placement.GuaranteeMet;
+            if (!placement.GuaranteeMet)
+                Debug.LogWarning($"Guaranteed-value rule broken: the nearest rooms hold {placement.NearValue:0}, " +
+                                 $"but 1.2 x the minimum winnable value is {LootPlacement.GuaranteeFactor * minimumValue:0}. " +
+                                 "Add valuable spawn points in the near rooms.");
+            if (placement.Overflow > 0 || placement.Unplaced > 0)
+                Debug.LogWarning($"Not enough valuable spawn points in the near rooms: {placement.Overflow} item(s) moved to the vault, " +
+                                 $"{placement.Unplaced} could not be placed.");
+            return placed;
         }
 
         private int PopulateEnemies(LevelLayout layout, List<RoomAuthoring> rooms, DeterministicRandom rng)

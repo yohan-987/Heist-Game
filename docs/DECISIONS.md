@@ -27,5 +27,6 @@
 | 2026-11-04 | Doctor hit: 60 damage, 2 s protection, wind-up of at least 0.75 s, regeneration only in safe rooms (5 per second) | Proposed | Tune in the Layer 1 gate |
 | 2026-11-04 | Hazard classes with cosmetic effects uncounted; failing must never pay more than succeeding | Decided | GAME_DESIGN.md 4.9 |
 | 2026-11-04 | Doses tracked per player; the dose gate limits waste but does not stop griefing | Decided | GAME_DESIGN.md 4.1 |
-| 2026-11-04 | Freeze new design and code until Layer 1 runs in Unity | Decided | Nine verified-in-theory systems are waiting on the editor |
+| 2026-11-04 | Freeze new design and code until Layer 1 runs in Unity | Decided, then overridden | Nine verified-in-theory systems are waiting on the editor |
+| 2026-11-05 | Wrote the design 2.1 code anyway, at the owner's request. No further new features until Layer 1 runs in Unity | Decided | Review items 9 to 16 are in code; the hallucination rules (Phase 7) stay unwritten |
 | | UI name for insanity = Pressure | Proposed | Code name stays `Insanity` |

@@ -15,6 +15,8 @@ namespace Game.Enemies
         [SerializeField, Min(1)] private int _minSpiders = 2;
         [SerializeField, Min(1)] private int _maxSpiders = 4;
         [SerializeField, Min(0f)] private float _cooldownSeconds = 20f;
+        [Tooltip("How long a swarm counts as an active hazard for the threat director. Matches the overlay's cap of about 8 seconds.")]
+        [SerializeField, Min(0f)] private float _hazardSeconds = 8f;
 
         private float _cooldown;
 
@@ -36,6 +38,10 @@ namespace Game.Enemies
 
             var target = Services.Players.Nearest(transform.position, out float playerDistance);
             if (target == null || playerDistance > _attackRange) return;
+
+            // Disruptive hazard: waits while a doctor is on or near the player, or two hazards are already active.
+            if (!Services.Threats.TryBegin(target.PlayerId, GetInstanceID(), HazardClass.Disruptive,
+                    target.Transform.position, _hazardSeconds)) return;
 
             int max = Mathf.Max(_minSpiders, _maxSpiders);
             int count = Random.Range(_minSpiders, max + 1);
