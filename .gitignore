@@ -64,3 +64,6 @@ crashlytics-build.properties
 # OS junk
 .DS_Store
 Thumbs.db
+
+# Command-line test output
+/TestResults/

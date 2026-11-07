@@ -255,7 +255,7 @@ The design is large. Build it in layers, and do not move on until the previous l
 - Networked physics, downed state, defibrillator, friendly fire
 - More maps and enemies, audio and art polish
 
-Most Layer 2 systems already exist at code level (radio, ground doctor, spiders, scripted scares, high difficulty). The **Threat Director and the hallucination rules do not**. Layer 2 code stays out of the scenes until Layer 1 passes its gate.
+Most Layer 2 systems already exist at code level (radio, ground doctor, spiders, scripted scares, high difficulty, the Threat Director). **Only the hallucination rules do not.** Layer 2 code stays out of the scenes until Layer 1 passes its gate.
 
 ### Layer 1 playtest gate
 
