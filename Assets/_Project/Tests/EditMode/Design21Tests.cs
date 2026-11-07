@@ -476,3 +476,25 @@ namespace Game.Tests
         }
     }
 }
+
+namespace Game.Tests
+{
+    public class InstanceKeyTests
+    {
+        [Test]
+        public void SameObject_SameKey_DifferentObjects_DifferentKeys()
+        {
+            var a = new object();
+            var b = new object();
+            Assert.AreEqual(InstanceKey.Of(a), InstanceKey.Of(a));
+            Assert.AreNotEqual(InstanceKey.Of(a), InstanceKey.Of(b));
+            Assert.AreNotEqual(0, InstanceKey.Of(a));
+        }
+
+        [Test]
+        public void Null_IsZero()
+        {
+            Assert.AreEqual(0, InstanceKey.Of(null));
+        }
+    }
+}

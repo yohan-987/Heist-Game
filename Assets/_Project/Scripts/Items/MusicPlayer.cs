@@ -89,7 +89,7 @@ namespace Game.Items
             Vector3 position = transform.position;
             float radius = Radius;
 
-            Services.Events.Publish(new MusicPlaying(GetInstanceID(), position, radius, _reliefPerSecond * _volume, _tickSeconds * 1.5f));
+            Services.Events.Publish(new MusicPlaying(InstanceKey.Of(this), position, radius, _reliefPerSecond * _volume, _tickSeconds * 1.5f));
             Services.Events.Publish(new NoiseEmitted(position, radius, NoiseSource.Music));
         }
 

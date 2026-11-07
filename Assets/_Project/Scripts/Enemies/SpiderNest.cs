@@ -40,7 +40,7 @@ namespace Game.Enemies
             if (target == null || playerDistance > _attackRange) return;
 
             // Disruptive hazard: waits while a doctor is on or near the player, or two hazards are already active.
-            if (!Services.Threats.TryBegin(target.PlayerId, GetInstanceID(), HazardClass.Disruptive,
+            if (!Services.Threats.TryBegin(target.PlayerId, InstanceKey.Of(this), HazardClass.Disruptive,
                     target.Transform.position, _hazardSeconds)) return;
 
             int max = Mathf.Max(_minSpiders, _maxSpiders);

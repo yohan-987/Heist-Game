@@ -92,7 +92,7 @@ namespace Game.Enemies
             Services.Events.Unsubscribe<NoiseEmitted>(HandleNoiseEvent);
             Services.Events.Unsubscribe<RepelBurst>(OnRepel);
             ReleaseHazard();
-            Services.Threats.RemoveDoctor(GetInstanceID());
+            Services.Threats.RemoveDoctor(InstanceKey.Of(this));
         }
 
         // ---------- Threat director (GAME_DESIGN 4.9) ----------
@@ -103,14 +103,14 @@ namespace Game.Enemies
             ReleaseHazard();
             if (_target == null) return;
             _hazardPlayerId = _target.PlayerId;
-            Services.Threats.TryBegin(_hazardPlayerId, GetInstanceID(), HazardClass.Lethal, _target.Transform.position, -1f);
+            Services.Threats.TryBegin(_hazardPlayerId, InstanceKey.Of(this), HazardClass.Lethal, _target.Transform.position, -1f);
             _hazardActive = true;
         }
 
         private void ReleaseHazard()
         {
             if (!_hazardActive) return;
-            Services.Threats.End(_hazardPlayerId, GetInstanceID());
+            Services.Threats.End(_hazardPlayerId, InstanceKey.Of(this));
             _hazardActive = false;
         }
 
@@ -158,7 +158,7 @@ namespace Game.Enemies
 
         private void Sense()
         {
-            Services.Threats.SetDoctor(GetInstanceID(), transform.position);
+            Services.Threats.SetDoctor(InstanceKey.Of(this), transform.position);
 
             var s = _fsm.Current;
             var seen = FindVisiblePlayer();

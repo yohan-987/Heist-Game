@@ -119,7 +119,7 @@ namespace Game.Enemies
             if (distance <= _grabDistance)
             {
                 // Hard-control hazard: it waits if the player already has two hazards or a doctor is close.
-                if (!Services.Threats.TryBegin(target.PlayerId, GetInstanceID(), HazardClass.HardControl,
+                if (!Services.Threats.TryBegin(target.PlayerId, InstanceKey.Of(this), HazardClass.HardControl,
                         target.Transform.position, -1f)) return;
 
                 _victim = target;
@@ -201,7 +201,7 @@ namespace Game.Enemies
             if (NavMesh.SamplePosition(transform.position, out var hit, 3f, NavMesh.AllAreas))
                 _agent.Warp(hit.position);
 
-            if (_victim != null) Services.Threats.End(_victim.PlayerId, GetInstanceID());
+            if (_victim != null) Services.Threats.End(_victim.PlayerId, InstanceKey.Of(this));
 
             if (_victim != null)
                 Services.Events.Publish(new PlayerReleasedByEnemy(_victim.PlayerId, Services.Spawner.EnsureIdentity(gameObject)));
