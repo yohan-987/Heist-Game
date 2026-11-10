@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62f08ffe9d7ab9a478aa76b234bc95da, type: 3}
+  m_Name: Valuable_Vase
+  m_EditorClassIdentifier: Game.Items::Game.Items.ValuableDefinition
+  DisplayName: Vase
+  Prefab: {fileID: 5686046955223286656, guid: 3a88bfb8d5e7ff34ebfa291322807907, type: 3}
+  BaseValue: 500
+  Mass: 3
+  ImpactThreshold: 6
+  LossPerImpulse: 0.01
+  BrokenFraction: 0.05
+  MinNoiseImpulse: 3
+  LoudnessPerImpulse: 0.8
+  MaxLoudness: 25
+  SpawnWeight: 1
