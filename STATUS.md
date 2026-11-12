@@ -66,6 +66,10 @@ Tests cover: event bus, seeded random numbers, state machines, noise, stamina an
 - Unity meta files committed.
 - Sandbox scene: floor, player with all components wired, walking and looking works.
 
+## Review fixes (2026-11-13, branch `fix/review-p0`)
+
+Four defects found by code review are fixed on the branch: the Sandbox `Head` offset, the run result on a team wipe, the threat director tick, and the difficulty initialisation order. **None of this has been compiled or run in Unity yet.** Before merging: compile, run all 200 EditMode tests, then repeat playtest points 1 to 3 in the Sandbox. The remaining findings are listed in `KNOWN_ISSUES.md`.
+
 ## Roadmap progress
 
 | Phase | Code | Proven in Unity |

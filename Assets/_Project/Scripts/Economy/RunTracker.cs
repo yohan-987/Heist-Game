@@ -36,6 +36,13 @@ namespace Game.Economy
             bus.Unsubscribe<DoseRequested>(OnDoseRequested);
         }
 
+        private void Update()
+        {
+            // The threat director has no component of its own. The run ticks it so hazard timers expire
+            // in any scene that has a run, with or without a JumpscareDirector.
+            Services.Threats.Tick(Services.Clock.DeltaTime);
+        }
+
         /// <summary>Start a run. <paramref name="valuePerDose"/> is the base recipe; difficulty scales it.</summary>
         public void Begin(int quotaDoses, float valuePerDose)
         {
@@ -46,12 +53,17 @@ namespace Game.Economy
             Publish();
         }
 
-        /// <summary>Ends the run. Succeeds only if the exit was unlocked (the quota was reached).</summary>
-        public void Finish()
+        /// <summary>
+        /// Ends the run. It succeeds only if the exit was unlocked (the quota was reached) and the players
+        /// actually left through it. Pass <c>false</c> for <paramref name="extracted"/> when the run ends any
+        /// other way (everyone died): a wipe is a failure even if the exit was already unlocked (GAME_DESIGN 4.10).
+        /// </summary>
+        public void Finish(bool extracted)
         {
             if (!_active) return;
             _active = false;
-            Services.Events.Publish(new LevelCompleted(_medicine.ExitUnlocked, _medicine.Banked, _medicine.QuotaDoses));
+            bool success = extracted && _medicine.ExitUnlocked;
+            Services.Events.Publish(new LevelCompleted(success, _medicine.Banked, _medicine.QuotaDoses));
         }
 
         private void OnDelivered(ValuableDelivered evt)
@@ -92,7 +104,7 @@ namespace Game.Economy
         private void OnPlayerDied(PlayerDied evt)
         {
             if (!_active) return;
-            if (!Services.Players.AnyAlive()) Finish();
+            if (!Services.Players.AnyAlive()) Finish(false);
         }
 
         private void Publish() =>

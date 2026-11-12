@@ -43,7 +43,7 @@ namespace Game.Economy
             if (_tracker == null) _tracker = FindFirstObjectByType<RunTracker>();
             if (_tracker == null || !_tracker.Active || !_tracker.Medicine.ExitUnlocked) return;
 
-            if (AllLivingInside()) _tracker.Finish();
+            if (AllLivingInside()) _tracker.Finish(true);
         }
 
         private bool AllLivingInside()

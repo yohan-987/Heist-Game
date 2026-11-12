@@ -41,8 +41,6 @@ namespace Game.Enemies
 
         private void Update()
         {
-            Services.Threats.Tick(Services.Clock.DeltaTime);
-
             if (_scheduler.TryHallucination(Services.Clock.DeltaTime, _localInsanity, out int id))
                 Services.Events.Publish(new Jumpscare(id, ScareKind.Hallucination));
         }

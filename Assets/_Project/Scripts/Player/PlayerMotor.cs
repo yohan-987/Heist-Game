@@ -126,7 +126,9 @@ namespace Game.Player
             if (_head != null)
             {
                 var p = _head.localPosition;
+                p.x = 0f;
                 p.y = height - _eyeInset;
+                p.z = 0f;
                 _head.localPosition = p;
             }
         }

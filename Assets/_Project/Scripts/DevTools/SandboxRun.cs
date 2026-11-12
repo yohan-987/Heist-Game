@@ -8,6 +8,7 @@ namespace Game.DevTools
     /// For test scenes without the level generator: starts a run with a fixed quota so delivery,
     /// dosing and the progress events work. Put it on the same object as a <see cref="RunTracker"/>.
     /// </summary>
+    [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(RunTracker))]
     public sealed class SandboxRun : MonoBehaviour
     {
@@ -20,11 +21,11 @@ namespace Game.DevTools
 
         private void OnDisable() => Services.Events.Unsubscribe<RunProgressChanged>(OnProgress);
 
-        private void Start()
-        {
-            Services.Difficulty = DifficultyProfile.For(_difficulty);
-            GetComponent<RunTracker>().Begin(_quotaDoses, _valuePerDose);
-        }
+        // Difficulty is set in Awake, before other scripts read it in their own Awake (Apple builds its
+        // rot model there). Starting the run waits until Start, when everything else exists.
+        private void Awake() => Services.Difficulty = DifficultyProfile.For(_difficulty);
+
+        private void Start() => GetComponent<RunTracker>().Begin(_quotaDoses, _valuePerDose);
 
         private void OnProgress(RunProgressChanged e)
         {
